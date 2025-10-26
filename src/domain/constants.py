@@ -1,3 +1,13 @@
+# константы для доменных сущностей и sql-моделей
 FIRST_NAME_MAX_LENGTH = 50
 LAST_NAME_MAX_LENGTH = 50
 PATRONYMIC_MAX_LENGTH = 50
+USER_ROLE_MAX_LENGTH = 50
+ROLE_DESCRIPTION_MAX_LENGTH = 255
+EMAIL_MAX_LENGTH = 254
+HASHED_PASSWORD_MAX_LENGTH = 255
+
+# роли и описания ролей для API, orm, domain
+ADMIN_ROLE = 'admin'
+MODERATOR_ROLE = 'moderator'
+USER_ROLE = 'user'
