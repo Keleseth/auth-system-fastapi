@@ -6,12 +6,13 @@
 from typing import TYPE_CHECKING
 
 from sqlalchemy import (
+    CheckConstraint,
     Column,
     ForeignKey,
     Integer,
     String,
     Table,
-    UUID
+    UUID as SQUUID
 )
 from sqlalchemy.orm import (
     Mapped,
@@ -19,7 +20,7 @@ from sqlalchemy.orm import (
     relationship
 )
 
-from src.domain.constants import USER_ROLE_MAX_LENGTH
+from src.domain.constants import ROLE_DESCRIPTION_MAX_LENGTH, USER_ROLE_MAX_LENGTH
 from src.models.base import Base
 
 
@@ -37,15 +38,37 @@ class RoleModel(Base):
         unique=True,
         nullable=False
     )
+    description: Mapped[str | None] = mapped_column(
+        String(ROLE_DESCRIPTION_MAX_LENGTH),
+        nullable=True
+    )
     users: Mapped[list['UserModel']] = relationship(
         secondary='user_role_association',
-        back_populates='roles'
+        back_populates='roles',
+        passive_deletes=True
+    )
+
+    __table_args__ = (
+        CheckConstraint(
+            'char_length(btrim(name)) >= 1',
+            name='ck_role_name_minlen'
+        ),
     )
 
 
 user_role_association = Table(
     'user_role_association',
     Base.metadata,
-    Column('user_id', UUID, ForeignKey('user_model.id')),
-    Column('role_id', Integer, ForeignKey('role_model.id'))
+    Column(
+        'user_id',
+        SQUUID,
+        ForeignKey('user_model.id', ondelete='CASCADE'),
+        primary_key=True
+    ),
+    Column(
+        'role_id',
+        Integer,
+        ForeignKey('role_model.id', ondelete='CASCADE'),
+        primary_key=True
+    )
 )
