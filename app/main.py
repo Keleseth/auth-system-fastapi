@@ -1,18 +1,13 @@
 from __future__ import annotations
 
-import time
 from contextlib import asynccontextmanager
 from typing import AsyncIterator
 from uuid import uuid4
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
-from starlette.middleware.cors import CORSMiddleware
-from starlette.middleware.gzip import GZipMiddleware
-from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from app.core.config import settings
-from auth.api.endpoints.health import router as health_router
 
 
 @asynccontextmanager

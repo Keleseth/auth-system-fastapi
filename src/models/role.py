@@ -20,8 +20,8 @@ from sqlalchemy.orm import (
     relationship
 )
 
-from src.domain.constants import ROLE_DESCRIPTION_MAX_LENGTH, USER_ROLE_MAX_LENGTH
-from src.models.base import Base
+from auth.domain.constants import ROLE_DESCRIPTION_MAX_LENGTH, USER_ROLE_MAX_LENGTH
+from auth.sqlalchemy_mixins.timestamp_mixin import Base
 
 
 if TYPE_CHECKING:

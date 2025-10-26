@@ -5,12 +5,12 @@ from uuid import UUID, uuid4
 
 from email_validator import EmailNotValidError, validate_email
 
-from src.domain.constants import (
+from auth.domain.constants import (
     FIRST_NAME_MAX_LENGTH,
     LAST_NAME_MAX_LENGTH,
     PATRONYMIC_MAX_LENGTH
 )
-from src.domain.exceptions import (
+from auth.domain.exceptions import (
     INACTIVE_USER,
     INVALID_EMAIL_FORMAT,
     INVALID_NAME,
