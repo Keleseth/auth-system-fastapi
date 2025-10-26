@@ -1,9 +1,8 @@
 """
 Модели:
-    UserModel - модель пользователей.
+    UserMixin - миксин для модели пользователей.
 """
 from datetime import datetime
-from typing import TYPE_CHECKING
 from uuid import UUID, uuid4
 
 from sqlalchemy import (
@@ -11,31 +10,31 @@ from sqlalchemy import (
     DateTime,
     String,
     text,
-    UUID as SQUUID
+    UUID as SQUUID,
 )
 from sqlalchemy.orm import (
     Mapped,
     mapped_column,
-    relationship
 )
 
-from src.domain.constants import (
+from auth.domain.constants import (
     EMAIL_MAX_LENGTH,
     FIRST_NAME_MAX_LENGTH,
     HASHED_PASSWORD_MAX_LENGTH,
     LAST_NAME_MAX_LENGTH,
     PATRONYMIC_MAX_LENGTH
 )
-from src.models.base import Base
-from src.models.role import user_role_association
 
 
-if TYPE_CHECKING:
-    from .role import RoleModel
-
-
-class UserModel(Base):
-
+class UserMixin:
+    """
+    Миксин для модели User.
+    Предоставляет все поля пользователя.
+    Не является готовой моделью, должен быть унаследован вместе с
+    декларативной моделью (DeclarativeBase) конечного приложения.
+    Связи с другими моделями (например, с ролями) должны
+    быть определены в конечном приложении.
+    """
     id: Mapped[UUID] = mapped_column(
         SQUUID,
         primary_key=True,
@@ -67,12 +66,6 @@ class UserModel(Base):
     deleted_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True),
         nullable=True
-    )
-
-    roles: Mapped[list['RoleModel']] = relationship(
-        secondary=user_role_association,
-        back_populates='users',
-        passive_deletes=True
     )
 
     __table_args__ = (

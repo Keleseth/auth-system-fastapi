@@ -18,6 +18,7 @@ class Settings(BaseSettings):
 
     APP_TITLE: str
     APP_DESCRIPTION: str
+    APP_VERSION: str
 
     model_config = ConfigDict(
         env_file='.env',
