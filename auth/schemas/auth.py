@@ -26,11 +26,6 @@ class CreateUserSchema(BaseModel):
     last_name: str | None = None
     patronymic: str | None = None
 
-    @field_validator('email')
-    @classmethod
-    def normalize_email(cls, v: EmailStr) -> EmailStr:
-        return EmailStr(str(v).strip().lower())
-
 
 class ReadUserSchema(BaseModel):
     """

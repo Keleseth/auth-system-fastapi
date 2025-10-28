@@ -1,41 +1,22 @@
+from abc import ABC
 from datetime import datetime
-from typing import Protocol
+from typing import TypeVar
 from uuid import UUID
 
 
-class UserModelProtocol(Protocol):
+class AbstractUserModel:
     """
-    Абстрактный класс - контракт, определяющий, какие свойства
-    должна предоставлять модель пользователя для корректной работы
-    библиотеки аутентификации.
+    Контракт для ORM-модели пользователя.
+
+    Любая модель пользователя должна соответствовать этому протоколу.
+    Наследование не требуется, достаточно совместимости по атрибутам.
     """
 
-    @property
-    def id(self) -> UUID:
-        """Уникальный идентификатор пользователя."""
-        raise NotImplementedError
+    id: UUID
+    email: str
+    hashed_password: str
+    is_active: bool
+    created_at: datetime
+    updated_at: datetime
 
-    @property
-    def email(self) -> str:
-        """Email пользователя."""
-        raise NotImplementedError
-
-    @property
-    def hashed_password(self) -> str:
-        """Хэшированный пароль пользователя."""
-        raise NotImplementedError
-
-    @property
-    def is_active(self) -> bool:
-        """Активен ли пользователь."""
-        raise NotImplementedError
-
-    @property
-    def created_at(self) -> datetime:
-        """Время создания пользователя."""
-        raise NotImplementedError
-
-    @property
-    def updated_at(self) -> datetime:
-        """Время последнего обновления пользователя."""
-        raise NotImplementedError
+TUserModel = TypeVar('TUserModel', bound=AbstractUserModel)

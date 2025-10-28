@@ -6,6 +6,7 @@ from fastapi import FastAPI
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
 
 from app.core.config import settings
+from app.api import main_router
 
 
 @asynccontextmanager
@@ -29,3 +30,4 @@ app = FastAPI(
     version='1.0.0',
     lifespan=lifespan,
 )
+app.include_router(main_router)

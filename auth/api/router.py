@@ -19,7 +19,7 @@ Depends склеивающая фабрика - возвращающая
 
 
     def get_user_repository(
-        user_model: type[UserModelProtocol] = UserModel,
+        user_model: Any = UserModel,
         session: AsyncSession = Depends(get_async_session),
     ) -> UserRepositoryProtocol:
         return SQLAlchemyUserRepository(
@@ -29,7 +29,7 @@ Depends склеивающая фабрика - возвращающая
 """
 from typing import Callable
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Response
 
 from auth.usecases import (
     register_user,
@@ -85,10 +85,9 @@ def create_auth_router(
             hasher=password_hasher,
             **user_schema.model_dump(exclude_none=True),
         )
-
         if user is None:
             raise HTTPException(
-                tatus_code=status.HTTP_400_BAD_REQUEST,
+                status_code=status.HTTP_400_BAD_REQUEST,
                 detail='Регистрация не удалась.'
             )
 
