@@ -1,6 +1,5 @@
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from functools import partial
 from uuid import UUID, uuid4
 
 from email_validator import EmailNotValidError, validate_email

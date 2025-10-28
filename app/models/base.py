@@ -5,7 +5,7 @@ from sqlalchemy.orm import DeclarativeBase, declared_attr
 
 class BaseModel(DeclarativeBase):
     """
-    Базовый класс для всех моделей SQLAlchemy.
+    Базовый класс для всех моделей проекта(SQLAlchemy).
     """
 
     @declared_attr.directive
