@@ -6,11 +6,11 @@
 from datetime import datetime
 from typing import Any, TypeVar
 
+from fastapi import status, HTTPException
 from pydantic import (
     BaseModel,
     ConfigDict,
     EmailStr,
-    Field,
     field_validator,
 )
 
@@ -21,10 +21,18 @@ class CreateUserSchema(BaseModel):
     """
 
     email: EmailStr
-    password: str = Field(min_length=8)
+    password: str
     first_name: str | None = None
     last_name: str | None = None
     patronymic: str | None = None
+
+    @field_validator('password')
+    def validate_password(cls, value: str) -> str:
+        if len(value) < 8:
+            raise ValueError(
+                'Пароль должен быть не короче 8 символов'
+            )
+        return value
 
 
 class ReadUserSchema(BaseModel):

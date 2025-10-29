@@ -17,12 +17,24 @@ class UserRepositoryProtocol(Protocol[TUserModel]):
     """
 
     async def get_by_email(self, email: str) -> TUserModel | None:
+        """
+        Получает пользователя по email.
+        """
+        pass
+
+    async def check_email_occupied(self, email: str) -> bool:
+        """
+        Проверяет, занята ли почта в базе данных.
+        """
         pass
 
     async def add(self, user: TUserModel) -> None:
         pass
 
     async def create(self, **fields: Any) -> TUserModel:
+        """
+        Создает нового пользователя в базе данных.
+        """
         pass
 
     async def update(
@@ -30,15 +42,27 @@ class UserRepositoryProtocol(Protocol[TUserModel]):
             user: TUserModel,
             **fields: Any
     ) -> TUserModel:
+        """
+        Обновляет пользователя в базе данных.
+        """
         pass
 
     async def delete(self, user: TUserModel) -> None:
+        """
+        Удаляет пользователя из базы данных.
+        """
         pass
 
     async def commit(self) -> None:
+        """
+        Коммитит текущую транзакцию.
+        """
         pass
 
     async def rollback(self) -> None:
+        """
+        Откатывает текущую транзакцию.
+        """
         pass
 
     def map_entity_to_data(self, entity: Any, **extra_fields: Any) -> Any:
@@ -49,6 +73,6 @@ class UserRepositoryProtocol(Protocol[TUserModel]):
 
     def to_entity(self, orm_obj: Any) -> Any:
         """
-        TODO думаю над реализацией
+        TODO продумать реализацию.
         """
         pass

@@ -20,8 +20,8 @@ async def register_user(
     patronymic: str = None,
     **extra_fields: Dict[str, Any],
 ) -> TUserModel | None:
-    user_exists = await user_repository.get_by_email(email)
-    if user_exists:
+    email_occupied = await user_repository.check_email_occupied(email)
+    if email_occupied:
         raise HTTPException(
             detail='Email уже занят',
             status_code=status.HTTP_400_BAD_REQUEST

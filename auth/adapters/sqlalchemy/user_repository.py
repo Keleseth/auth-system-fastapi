@@ -8,7 +8,7 @@
 from typing import Any
 from dataclasses import asdict
 
-from sqlalchemy import select
+from sqlalchemy import exists, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from auth.abstractions import TUserModel
@@ -39,6 +39,18 @@ class SQLAlchemyUserRepository(UserRepositoryProtocol):
         )
         return result.scalar_one_or_none()
 
+    async def check_email_occupied(self, email: str) -> bool:
+        """
+        Проверяет, занята ли почта в базе данных.
+        """
+        email = email.lower().strip()
+        result = await self._session.execute(
+            select(
+                exists().where(self._user_model.email==email)
+            )
+        )
+        return bool(result.scalar())
+
     async def add(self, user: TUserModel) -> None:
         self._session.add(user)
 
@@ -67,7 +79,7 @@ class SQLAlchemyUserRepository(UserRepositoryProtocol):
         except Exception as e:
             await self._session.rollback()
             raise RepositoryError(
-                ''
+                'Ошибка завершения транзакции'
             ) from e
 
     async def rollback(self) -> None:

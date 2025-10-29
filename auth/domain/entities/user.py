@@ -46,6 +46,7 @@ class User:
 
     
     def __post_init__(self) -> None:
+        self.email = self.email.lower().strip()
         self._validate_email()
         self._validate_incoming_profile_data()
 
