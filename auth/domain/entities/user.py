@@ -1,6 +1,5 @@
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from functools import partial
 from uuid import UUID, uuid4
 
 from email_validator import EmailNotValidError, validate_email
@@ -34,9 +33,9 @@ class User:
 
     Является центральной сущностью в домене аутентификации и авторизации.
     """
-    id: UUID = field(default_factory=uuid4)
     email: str
     hashed_password: str
+    id: UUID = field(default_factory=uuid4)
     first_name: str | None = None
     last_name: str | None = None
     patronymic: str | None = None
@@ -45,31 +44,11 @@ class User:
     updated_at: datetime | None = None
     deleted_at: datetime | None = None
 
-
-    @staticmethod
-    def create_user(
-        email: str,
-        hashed_password: str,
-        first_name: str | None,
-        last_name: str | None,
-        patronymic: str | None = None
-    ):
-        """
-        Фабрика для создания нового пользователя.
-        """
-        User._validate_email(email)
-        User._validate_incoming_profile_data(
-            first_name=first_name,
-            last_name=last_name,
-            patronymic=patronymic
-        )
-        return User(
-            email=email,
-            hashed_password=hashed_password,
-            first_name=first_name,
-            last_name=last_name,
-            patronymic=patronymic,
-        )
+    
+    def __post_init__(self) -> None:
+        self.email = self.email.lower().strip()
+        self._validate_email()
+        self._validate_incoming_profile_data()
 
     def update_profile(
         self,
@@ -82,11 +61,7 @@ class User:
         """
         self._ensure_is_active()
         self._ensure_is_not_deleted()
-        User._validate_incoming_profile_data(
-            first_name=first_name,
-            last_name=last_name,
-            patronymic=patronymic
-        )
+        self._validate_incoming_profile_data()
 
         self.first_name = first_name
         self.last_name = last_name
@@ -126,39 +101,36 @@ class User:
                 USER_ALREADY_DELETED
             )
 
-    @staticmethod
-    def _validate_email(email: str) -> None:
+    def _validate_email(self) -> None:
         """
         Проверяет валидность формата email.
         """
         try:
-            validate_email(email)
+            validate_email(self.email)
         except EmailNotValidError:
             raise InvalidUserDataError(INVALID_EMAIL_FORMAT)
 
-    @staticmethod
-    def _validate_incoming_profile_data(
-        first_name: str | None,
-        last_name: str | None,
-        patronymic: str | None,
-    ):
+    def _validate_incoming_profile_data(self):
         """
         Валидирует входящие данные профиля пользователя(DTO).
         """
-        if first_name is not None and (
-            len(first_name) == 0 or len(first_name) > FIRST_NAME_MAX_LENGTH
+        if self.first_name is not None and (
+            len(self.first_name) == 0
+            or len(self.first_name) > FIRST_NAME_MAX_LENGTH
         ):
             raise InvalidUserDataError(
                 INVALID_NAME
             )
-        if last_name is not None and (
-            len(last_name) == 0 or len(last_name) > LAST_NAME_MAX_LENGTH
+        if self.last_name is not None and (
+            len(self.last_name) == 0
+            or len(self.last_name) > LAST_NAME_MAX_LENGTH
         ):
             raise InvalidUserDataError(
                 INVALID_LAST_NAME
             )
-        if patronymic is not None and (
-            len(patronymic) == 0 or len(patronymic) > PATRONYMIC_MAX_LENGTH
+        if self.patronymic is not None and (
+            len(self.patronymic) == 0
+            or len(self.patronymic) > PATRONYMIC_MAX_LENGTH
         ):
             raise InvalidUserDataError(
                 INVALID_PATRONYMIC

@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from contextlib import asynccontextmanager
 from typing import AsyncIterator
 from uuid import uuid4
@@ -8,6 +6,7 @@ from fastapi import FastAPI
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
 
 from app.core.config import settings
+from app.api import main_router
 
 
 @asynccontextmanager
@@ -15,14 +14,12 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     app.state.db_engine = None
     try:
         engine = create_async_engine(settings.database_url, pool_pre_ping=True)
-        # Simple startup probe to fail fast if DB is unreachable
         async with engine.begin() as _:
             pass
         app.state.db_engine = engine
         yield
     finally:
-        # Gracefully dispose resources
-        engine: AsyncEngine | None = getattr(app.state, "db_engine", None)
+        engine: AsyncEngine | None = getattr(app.state, 'db_engine', None)
         if engine is not None:
             await engine.dispose()
 
@@ -33,3 +30,4 @@ app = FastAPI(
     version='1.0.0',
     lifespan=lifespan,
 )
+app.include_router(main_router)
