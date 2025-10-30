@@ -56,6 +56,7 @@ from auth.usecases import (
     update_user_profile,
     authenticate_user,
 )
+from auth.api.v1.dependencies import build_get_current_user_dependency
 
 
 def create_auth_router(
@@ -101,41 +102,10 @@ def create_auth_router(
     token_service_dependency = provide_token_service(token_service)
 
     # TODO протокольную аннотацию Depends не пропускает. Обойти.
-    async def get_current_user(
-        authorization: str = Header(...),
-        token_service: TokenService = Depends(
-            token_service_dependency
-        ),
-        user_repository: UserRepositoryProtocol = Depends(
-            user_repository_dependency
-        ),
-    ) -> UserModelTypeHint:
-        """
-        Зависимость, проверяющая токен на валидность
-        и возвращающая пользователя.
-        """
-        token = authorization.removeprefix('Bearer ').strip()
-        try:
-            payload = token_service.decode_access(token)
-        except JWTError:
-            raise HTTPException(
-                status_code=401,
-                detail="Invalid or expired token"
-            )
-        try:
-            user = await user_repository.get_user_by_id(payload.get('sub'))
-        except Exception:
-            raise HTTPException(
-                status_code=401,
-                detail='Пользователь не найден'
-            )
-        return user
-
-    async def author_or_admin_only(
-        object_id,
-        current_user: UserModelTypeHint = Depends(get_current_user)
-    ) -> None:
-        current_user
+    get_current_user = build_get_current_user_dependency(
+        token_service_dependency=token_service_dependency,
+        user_repository_dependency=user_repository_dependency,
+    )
 
     @router.post(
         '/register',
