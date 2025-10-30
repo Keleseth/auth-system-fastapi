@@ -48,6 +48,38 @@ class ReadUserSchema(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class LoginRequestSchema(BaseModel):
+    """
+    Базовая входная схема для аутентификации пользователя.
+    """
+
+    email: EmailStr
+    password: str
+
+
+class UpdateUserSchema(BaseModel):
+    """
+    Базовая входная схема для обновления профиля пользователя.
+    """
+
+    first_name: str | None = None
+    last_name: str | None = None
+    patronymic: str | None = None
+
+
+class LoginResponseSchema(BaseModel):
+    """
+    Базовапя схема передачи токена пользователю.
+    """
+    access_token: str
+    token_type: str
+
+
 CreateUserSchemaT = TypeVar('CreateUserSchemaT', bound=CreateUserSchema)
 ReadUserSchemaT = TypeVar('ReadUserSchemaT', bound=ReadUserSchema)
-
+LoginRequestSchemaT = TypeVar('LoginRequestSchemaT', bound=LoginRequestSchema)
+LoginResponseSchemaT = TypeVar(
+    'LoginResponseSchemaT',
+    bound=LoginResponseSchema
+)
+UpdateUserSchemaT = TypeVar('UpdateUserSchemaT', bound=UpdateUserSchema)

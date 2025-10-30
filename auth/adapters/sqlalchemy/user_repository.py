@@ -5,13 +5,15 @@
 Адаптер пользователей создаётся в зависимостях приложения
 и передаётся в эндпоинт через Depends.
 """
-from typing import Any
 from dataclasses import asdict
+from typing import Any
+from uuid import UUID
 
 from sqlalchemy import exists, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from auth.abstractions import TUserModel
+from auth.domain.entities.user import User
 from auth.exceptions.custom_exceptions import RepositoryError
 from auth.ports.user_repository import UserRepositoryProtocol
 
@@ -31,6 +33,15 @@ class SQLAlchemyUserRepository(UserRepositoryProtocol):
     def __init__(self, session: AsyncSession, user_model: type[TUserModel]) -> None:
         self._session = session
         self._user_model = user_model
+
+    async def get_user_by_id(self, user_id: UUID) -> TUserModel | None:
+        """
+        Получает пользователя по ID.
+        """
+        result = await self._session.execute(
+            select(self._user_model).where(self._user_model.id==user_id)
+        )
+        return result.scalar_one_or_none()
 
     async def get_by_email(self, email: str) -> TUserModel | None:
         email = email.lower().strip()
@@ -99,11 +110,20 @@ class SQLAlchemyUserRepository(UserRepositoryProtocol):
             data.update(extra_fields)
         return data
 
-    def to_entity(self, orm_obj: Any) -> Any:
+    def to_entity(self, orm_user_obj: Any) -> User:
         """
         Маппит ORM-модель пользователя в доменную сущность.
         Ожидает, что orm_obj имеет атрибуты, совместимые с доменной сущностью.
         """
-        # Здесь можно использовать dataclass/entity конструктор, если есть
-        # Например: return UserEntity(**orm_obj.__dict__)
-        return orm_obj
+        return User(
+            id=orm_user_obj.id,
+            email=orm_user_obj.email,
+            hashed_password=orm_user_obj.hashed_password,
+            first_name=orm_user_obj.first_name,
+            last_name=orm_user_obj.last_name,
+            patronymic=orm_user_obj.patronymic,
+            is_active=orm_user_obj.is_active,
+            created_at=orm_user_obj.created_at,
+            updated_at=orm_user_obj.updated_at,
+            deleted_at=orm_user_obj.deleted_at
+        )
