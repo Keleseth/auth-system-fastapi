@@ -5,7 +5,7 @@ from fastapi import APIRouter
 from app.db.dependencies import get_user_repository
 from app.core.config import settings
 from auth.api.router import create_auth_router
-from auth.security.token_service import TokenService
+from auth.services.security.token_service import TokenService
 
 router = APIRouter(
     prefix='/v1',

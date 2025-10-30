@@ -4,11 +4,11 @@ from typing import TypeVar
 from uuid import UUID
 
 
-class AbstractUserModel:
+class UserModelTypeHint:
     """
     Контракт для ORM-модели пользователя.
 
-    Любая модель пользователя должна соответствовать этому протоколу.
+    Любая модель пользователя должна соответствовать этому контракту.
     Наследование не требуется, достаточно совместимости по атрибутам.
     """
 
@@ -19,4 +19,4 @@ class AbstractUserModel:
     created_at: datetime
     updated_at: datetime
 
-TUserModel = TypeVar('TUserModel', bound=AbstractUserModel)
+TUserModel = TypeVar('TUserModel', bound=UserModelTypeHint)

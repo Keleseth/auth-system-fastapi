@@ -32,9 +32,9 @@ from typing import Callable
 from fastapi import APIRouter, Depends, HTTPException, Header, status, Response
 from jose import JWTError
 
-from auth.abstractions import AbstractUserModel
+from auth.abstractions import UserModelTypeHint
 from auth.ports.user_repository import UserRepositoryProtocol
-from auth.security import (
+from auth.services.security import (
     DEFAULT_HASHER,
     PasswordHasher,
     TokenService,
@@ -47,6 +47,10 @@ from auth.schemas.auth import (
     UpdateUserSchemaT,
 )
 from auth.schemas.auth_schemas import AuthSchemas
+from auth.services.security.token_service import (
+    TokenService,
+    TokenServiceProtocol,
+)
 from auth.usecases import (
     register_user,
     update_user_profile,
@@ -57,7 +61,7 @@ from auth.usecases import (
 def create_auth_router(
     user_repository_dependency: Callable[..., UserRepositoryProtocol],
     *,
-    token_service: TokenService,
+    token_service: TokenServiceProtocol,
     schemas: AuthSchemas[
         CreateUserSchemaT,
         LoginRequestSchemaT,
@@ -93,9 +97,11 @@ def create_auth_router(
             return token_service
         return _dependency
 
+    # Зависимость для внедрения сервиса работы с токенами.
     token_service_dependency = provide_token_service(token_service)
 
-    async def require_owner(
+    # TODO протокольную аннотацию Depends не пропускает. Обойти.
+    async def get_current_user(
         authorization: str = Header(...),
         token_service: TokenService = Depends(
             token_service_dependency
@@ -103,7 +109,7 @@ def create_auth_router(
         user_repository: UserRepositoryProtocol = Depends(
             user_repository_dependency
         ),
-    ):
+    ) -> UserModelTypeHint:
         """
         Зависимость, проверяющая токен на валидность
         и возвращающая пользователя.
@@ -124,6 +130,12 @@ def create_auth_router(
                 detail='Пользователь не найден'
             )
         return user
+
+    async def author_or_admin_only(
+        object_id,
+        current_user: UserModelTypeHint = Depends(get_current_user)
+    ) -> None:
+        current_user
 
     @router.post(
         '/register',
@@ -174,6 +186,16 @@ def create_auth_router(
         return {'access_token': token, 'token_type': 'bearer'}
 
 
+    @router.post(
+        '/logout',
+        status_code=status.HTTP_204_NO_CONTENT,
+    )
+    async def logout(
+        current_user: UserModelTypeHint = Depends(get_current_user),
+    ):
+        return
+
+
     @router.patch(
         '/users/me/',
         response_model=schemas.read,
@@ -181,7 +203,7 @@ def create_auth_router(
     )
     async def update_me(
         user_schema: schemas.update,  # type: ignore[valid-type]
-        current_user: AbstractUserModel = Depends(require_owner),
+        current_user: UserModelTypeHint = Depends(get_current_user),
         user_repository: UserRepositoryProtocol = Depends(
             user_repository_dependency
         ),

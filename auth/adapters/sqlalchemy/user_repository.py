@@ -87,11 +87,11 @@ class SQLAlchemyUserRepository(UserRepositoryProtocol):
     async def commit(self) -> None:
         try:
             await self._session.commit()
-        except Exception as e:
+        except Exception as error:
             await self._session.rollback()
             raise RepositoryError(
                 'Ошибка завершения транзакции'
-            ) from e
+            ) from error
 
     async def rollback(self) -> None:
         await self._session.rollback()
