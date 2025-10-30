@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 from typing import Generic
-from auth.schemas.auth import (
+from auth.schemas.user_auth_schemas import (
     CreateUserSchema,
     CreateUserSchemaT,
     LoginRequestSchema,
@@ -11,7 +11,11 @@ from auth.schemas.auth import (
     LoginResponseSchema,
     LoginResponseSchemaT,
     UpdateUserSchema,
-    UpdateUserSchemaT
+    UpdateUserSchemaT,
+    UpdateUserRoleSchema,
+    UpdateUserRoleSchemaT,
+    ReadUserSchemaAdmin,
+    ReadUserSchemaAdminT,
 )
 
 
@@ -21,7 +25,9 @@ class AuthSchemas(Generic[
     ReadUserSchemaT,
     LoginRequestSchemaT,
     LoginResponseSchemaT,
-    UpdateUserSchemaT
+    UpdateUserSchemaT,
+    UpdateUserRoleSchemaT,
+    ReadUserSchemaAdminT,
 ]):
     """
     Датакласс - контейнер для кастомных и дефолтных схем системы
@@ -37,3 +43,5 @@ class AuthSchemas(Generic[
     update: type[UpdateUserSchemaT] = UpdateUserSchema
     login_request: type[LoginRequestSchemaT] = LoginRequestSchema
     login_response: type[LoginResponseSchemaT] = LoginResponseSchema
+    update_role: type[UpdateUserRoleSchemaT] = UpdateUserRoleSchema
+    read_user_admin: type[ReadUserSchemaAdminT] = ReadUserSchemaAdmin

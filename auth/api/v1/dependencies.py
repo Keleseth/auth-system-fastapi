@@ -7,6 +7,12 @@ from typing import Any, Callable
 from fastapi import Depends, HTTPException, Header
 from jose import JWTError
 
+from auth.services.constants import (
+    INACTIVE_USER,
+    INVALID_ACCESS_TOKEN_ERROR,
+    TOKEN_TYPE,
+    USER_NOT_FOUND_ERROR
+)
 from auth.services.security.token_service import TokenServiceProtocol
 
 
@@ -15,6 +21,10 @@ def build_get_current_user_dependency(
     token_service_dependency: Callable[..., TokenServiceProtocol],
     user_repository_dependency: Callable[..., Any],
 ):
+    """
+    Фабрика зависимости 'get_current_user' получения аутентифицированного
+    пользователя после проверки токена на валидность.
+    """
     async def get_current_user(
         authorization: str = Header(),
         token_service: TokenServiceProtocol = Depends(
@@ -24,20 +34,50 @@ def build_get_current_user_dependency(
             user_repository_dependency
         ),
     ) -> Any:
-        token = authorization.removeprefix('Bearer ').strip()
+        token = authorization.removeprefix(TOKEN_TYPE).strip()
         try:
             payload = token_service.decode_access(token)
         except JWTError:
             raise HTTPException(
                 status_code=401,
-                detail="Invalid or expired token"
+                detail=INVALID_ACCESS_TOKEN_ERROR
             )
         try:
             user = await user_repository.get_user_by_id(payload.get('sub'))
         except Exception:
             raise HTTPException(
                 status_code=401,
-                detail='Пользователь не найден'
+                detail=USER_NOT_FOUND_ERROR
+            )
+        if not user.is_active:
+            raise HTTPException(
+                status_code=403,
+                detail=INACTIVE_USER
+            )
+        if user.token_version != payload.get('token_version'):
+            raise HTTPException(
+                status_code=401,
+                detail=INVALID_ACCESS_TOKEN_ERROR
             )
         return user
     return get_current_user
+
+
+def build_admin_only_dependency(
+    get_current_user_dependency: Callable[..., Any],
+):
+    """
+    Проверка токена пользователя и права администратора.
+    """
+    async def admin_only(
+        current_user: Any = Depends(
+            get_current_user_dependency
+        ),
+    ) -> None:
+        is_admin = any(role.name == 'admin' for role in current_user.roles)
+        if not is_admin:
+            raise HTTPException(
+                status_code=403,
+                detail='Требуются права администратора.'
+            )
+    return admin_only

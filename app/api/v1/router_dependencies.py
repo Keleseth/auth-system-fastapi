@@ -12,6 +12,7 @@ from app.core.config import settings
 from app.db.dependencies import get_user_repository
 from app.models.mock_data import mock_objects, MockData
 from auth.api.v1.dependencies import build_get_current_user_dependency
+from auth.services.constants import INVALID_ACCESS_TOKEN_ERROR, USER_NOT_FOUND_ERROR
 from auth.services.security.token_service import TokenService, TokenServiceProtocol
 
 
@@ -53,14 +54,14 @@ def build_get_current_user_dependency(
         except JWTError:
             raise HTTPException(
                 status_code=401,
-                detail="Invalid or expired token"
+                detail=INVALID_ACCESS_TOKEN_ERROR
             )
         try:
             user = await user_repository.get_user_by_id(payload.get('sub'))
         except Exception:
             raise HTTPException(
                 status_code=401,
-                detail='Пользователь не найден'
+                detail=USER_NOT_FOUND_ERROR
             )
         return user
     return get_current_user

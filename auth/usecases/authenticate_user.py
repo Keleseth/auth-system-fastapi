@@ -26,8 +26,8 @@ async def authenticate_user(
             status_code=status.HTTP_400_BAD_REQUEST
         )
     try:
-        user = user_repository.to_entity(orm_user_obj)
-        user.verify_user_can_authenticate()
+        domain_user = user_repository.to_entity(orm_user_obj)
+        domain_user.verify_user_can_authenticate()
     except InvalidUserDataError as error:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -38,12 +38,13 @@ async def authenticate_user(
             status_code=status.HTTP_403_FORBIDDEN,
             detail=str(error),
         )
-    if not hasher.verify(password, user.hashed_password):
+    if not hasher.verify(password, domain_user.hashed_password):
         raise HTTPException(
             detail=WRONG_EMAIL_OR_PASSWORD,
             status_code=status.HTTP_400_BAD_REQUEST
         )
     token = token_service.provide_access_token(
-        sub=str(user.id)
+        sub=str(domain_user.id),
+        token_version=int(orm_user_obj.token_version)
     )
     return token
