@@ -25,6 +25,6 @@ class CustomUniqueViolationError(AuthBaseError):
 
 class RepositoryError(AuthBaseError):
     """
-    Любая другая ошибка репозитория/хранилища.
+    Любая другая ошибка репозитория.
     """
     pass

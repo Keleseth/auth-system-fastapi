@@ -4,13 +4,25 @@ from typing import Generic
 from auth.schemas.auth import (
     CreateUserSchema,
     CreateUserSchemaT,
+    LoginRequestSchema,
+    LoginRequestSchemaT,
     ReadUserSchema,
-    ReadUserSchemaT
+    ReadUserSchemaT,
+    LoginResponseSchema,
+    LoginResponseSchemaT,
+    UpdateUserSchema,
+    UpdateUserSchemaT
 )
 
 
 @dataclass(frozen=True, slots=True)
-class AuthSchemas(Generic[CreateUserSchemaT, ReadUserSchemaT]):
+class AuthSchemas(Generic[
+    CreateUserSchemaT,
+    ReadUserSchemaT,
+    LoginRequestSchemaT,
+    LoginResponseSchemaT,
+    UpdateUserSchemaT
+]):
     """
     Датакласс - контейнер для кастомных и дефолтных схем системы
     аутентификации и авторизации.
@@ -22,3 +34,6 @@ class AuthSchemas(Generic[CreateUserSchemaT, ReadUserSchemaT]):
 
     create: type[CreateUserSchemaT] = CreateUserSchema
     read: type[ReadUserSchemaT] = ReadUserSchema
+    update: type[UpdateUserSchemaT] = UpdateUserSchema
+    login_request: type[LoginRequestSchemaT] = LoginRequestSchema
+    login_response: type[LoginResponseSchemaT] = LoginResponseSchema

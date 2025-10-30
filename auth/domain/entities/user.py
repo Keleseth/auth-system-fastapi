@@ -50,6 +50,13 @@ class User:
         self._validate_email()
         self._validate_incoming_profile_data()
 
+    def verify_user_can_authenticate(self) -> None:
+        """
+        Проверяет все инварианты, необходимые для аутентификации пользователя.
+        """
+        self._ensure_is_active()
+        self._ensure_is_not_deleted()
+
     def update_profile(
         self,
         first_name: str | None,

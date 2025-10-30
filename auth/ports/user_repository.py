@@ -5,8 +5,10 @@
 со всеми нужными операциями.
 """
 from typing import Protocol, Any
+from uuid import UUID
 
 from auth.abstractions import TUserModel
+from auth.domain.entities.user import User
 
 
 class UserRepositoryProtocol(Protocol[TUserModel]):
@@ -15,6 +17,12 @@ class UserRepositoryProtocol(Protocol[TUserModel]):
 
     Содержит только методы для доступа к данным.
     """
+
+    async def get_user_by_id(self, user_id: UUID) -> TUserModel | None:
+        """
+        Получает пользователя по ID.
+        """
+        pass
 
     async def get_by_email(self, email: str) -> TUserModel | None:
         """
@@ -71,7 +79,7 @@ class UserRepositoryProtocol(Protocol[TUserModel]):
         """
         pass
 
-    def to_entity(self, orm_obj: Any) -> Any:
+    def to_entity(self, orm_user_obj: Any) -> User:
         """
         TODO продумать реализацию.
         """

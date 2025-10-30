@@ -14,6 +14,7 @@ class Settings(BaseSettings):
 
     JWT_SECRET_KEY: str
     JWT_ALGORITHM: str
+    JWT_ACCESS_TOKEN_LIFESPAN: int
     AUTH_LOGIN_FIELD: str = 'email'  # залогин по email как дефолт
 
     APP_TITLE: str
