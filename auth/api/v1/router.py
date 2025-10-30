@@ -29,8 +29,12 @@ Depends склеивающая фабрика - возвращающая
 """
 from typing import Callable
 
-from fastapi import APIRouter, Depends, HTTPException, Header, status, Response
-from jose import JWTError
+from fastapi import (
+    APIRouter,
+    Depends,
+    HTTPException,
+    status,
+)
 
 from auth.abstractions import UserModelTypeHint
 from auth.ports.user_repository import UserRepositoryProtocol
@@ -39,14 +43,15 @@ from auth.services.security import (
     PasswordHasher,
     TokenService,
 )
-from auth.schemas.auth import (
+from auth.schemas.user_auth_schemas import (
     CreateUserSchemaT,
     LoginRequestSchemaT,
     LoginResponseSchemaT,
     ReadUserSchemaT,
+    UpdateUserRoleSchemaT,
     UpdateUserSchemaT,
 )
-from auth.schemas.auth_schemas import AuthSchemas
+from auth.schemas.schemas_container import AuthSchemas
 from auth.services.security.token_service import (
     TokenService,
     TokenServiceProtocol,
@@ -56,7 +61,13 @@ from auth.usecases import (
     update_user_profile,
     authenticate_user,
 )
-from auth.api.v1.dependencies import build_get_current_user_dependency
+from auth.api.v1.dependencies import (
+    build_admin_only_dependency,
+    build_get_current_user_dependency
+)
+from auth.usecases.admin_update_user import update_user_role
+from auth.usecases.logout_user import logout_user
+from auth.usecases.soft_delete import soft_delete_usecase
 
 
 def create_auth_router(
@@ -69,6 +80,7 @@ def create_auth_router(
         LoginResponseSchemaT,
         ReadUserSchemaT,
         UpdateUserSchemaT,
+        UpdateUserRoleSchemaT,
     ] = AuthSchemas(),
     password_hasher: PasswordHasher = DEFAULT_HASHER,
     prefix: str = '/auth',
@@ -98,13 +110,18 @@ def create_auth_router(
             return token_service
         return _dependency
 
-    # Зависимость для внедрения сервиса работы с токенами.
+    # Зависимость для внедрения сервиса работы с токенами
     token_service_dependency = provide_token_service(token_service)
 
-    # TODO протокольную аннотацию Depends не пропускает. Обойти.
+    # TODO протокольную аннотацию Depends не пропускает. Обойти
     get_current_user = build_get_current_user_dependency(
         token_service_dependency=token_service_dependency,
         user_repository_dependency=user_repository_dependency,
+    )
+
+    # Зависимость, разрешающая доступ только администраторам
+    admin_only = build_admin_only_dependency(
+        get_current_user_dependency=get_current_user
     )
 
     @router.post(
@@ -162,8 +179,14 @@ def create_auth_router(
     )
     async def logout(
         current_user: UserModelTypeHint = Depends(get_current_user),
+        user_repository: UserRepositoryProtocol = Depends(
+            user_repository_dependency
+        ),
     ):
-        return
+        await logout_user(
+            current_user=current_user,
+            user_repository=user_repository,
+        )
 
 
     @router.patch(
@@ -184,5 +207,21 @@ def create_auth_router(
             **user_schema.model_dump(exclude_none=True),
         )
         return user
+
+
+    @router.post(
+        '/users/me/delete',
+        status_code=status.HTTP_204_NO_CONTENT,
+    )
+    async def soft_delete_me(
+        current_user: UserModelTypeHint = Depends(get_current_user),
+        user_repository: UserRepositoryProtocol = Depends(
+            user_repository_dependency
+        ),
+    ):
+        await soft_delete_usecase(
+            user=current_user,
+            user_repository=user_repository,
+        )
 
     return router

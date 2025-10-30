@@ -6,13 +6,14 @@
 from datetime import datetime
 from typing import Any, TypeVar
 
-from fastapi import status, HTTPException
 from pydantic import (
     BaseModel,
     ConfigDict,
     EmailStr,
     field_validator,
 )
+
+from auth.schemas.role_schemas import ReadRoleSchema
 
 
 class CreateUserSchema(BaseModel):
@@ -42,8 +43,9 @@ class ReadUserSchema(BaseModel):
 
     id: Any
     email: EmailStr
-    is_active: bool
-    created_at: datetime | None = None
+    last_name: str | None = None
+    first_name: str | None = None
+    patronymic: str | None = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -75,6 +77,30 @@ class LoginResponseSchema(BaseModel):
     token_type: str
 
 
+class ReadUserSchemaAdmin(ReadUserSchema):
+    """
+    Расширенная схема чтения пользователя для администраторов.
+    """
+
+    last_name: str | None = None
+    first_name: str | None = None
+    patronymic: str | None = None
+    is_active: bool
+    created_at: datetime | None = None
+    update_at: datetime | None = None
+    deleted_at: datetime | None = None
+    role: ReadRoleSchema
+
+
+
+class UpdateUserRoleSchema(BaseModel):
+    """
+    Базовая схема для обновления роли пользователя.
+    """
+
+    role: str
+
+
 CreateUserSchemaT = TypeVar('CreateUserSchemaT', bound=CreateUserSchema)
 ReadUserSchemaT = TypeVar('ReadUserSchemaT', bound=ReadUserSchema)
 LoginRequestSchemaT = TypeVar('LoginRequestSchemaT', bound=LoginRequestSchema)
@@ -83,3 +109,11 @@ LoginResponseSchemaT = TypeVar(
     bound=LoginResponseSchema
 )
 UpdateUserSchemaT = TypeVar('UpdateUserSchemaT', bound=UpdateUserSchema)
+UpdateUserRoleSchemaT = TypeVar(
+    'UpdateUserRoleSchemaT',
+    bound=UpdateUserRoleSchema
+)
+ReadUserSchemaAdminT = TypeVar(
+    'ReadUserSchemaAdminT',
+    bound=ReadUserSchemaAdmin
+)

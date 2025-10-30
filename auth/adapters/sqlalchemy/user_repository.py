@@ -6,16 +6,18 @@
 и передаётся в эндпоинт через Depends.
 """
 from dataclasses import asdict
+from datetime import datetime, timezone
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import exists, select
+from sqlalchemy import exists, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from auth.abstractions import TUserModel
 from auth.domain.entities.user import User
 from auth.exceptions.custom_exceptions import RepositoryError
 from auth.ports.user_repository import UserRepositoryProtocol
+from auth.services.constants import DELETE_USER_ERROR
 
 
 class SQLAlchemyUserRepository(UserRepositoryProtocol):
@@ -28,6 +30,7 @@ class SQLAlchemyUserRepository(UserRepositoryProtocol):
 
     Примечания:
         - Сессия закрепляется за объектом репозитория при инициализации в Depends.
+        - Все методы репозитория являются асинхронными для единообразия.
     """
 
     def __init__(self, session: AsyncSession, user_model: type[TUserModel]) -> None:
@@ -62,9 +65,6 @@ class SQLAlchemyUserRepository(UserRepositoryProtocol):
         )
         return bool(result.scalar())
 
-    async def add(self, user: TUserModel) -> None:
-        self._session.add(user)
-
     async def create(self, **fields: Any) -> TUserModel:
         """
         Создаёт ORM-экземпляр пользователя и помещает его в сессию без коммита.
@@ -78,11 +78,22 @@ class SQLAlchemyUserRepository(UserRepositoryProtocol):
     async def update(self, user: TUserModel, **fields: Any) -> TUserModel:
         for key, value in fields.items():
             setattr(user, key, value)
-        self._session.add(user)
-        return user
+        await self.add(user)
 
-    async def delete(self, user: TUserModel) -> None:
-        await self._session.delete(user)
+
+    async def soft_delete(
+        self,
+        user: TUserModel,
+        active_status: bool = False,
+        deleted_at: datetime | None = None,
+    ) -> None:
+        user.is_active = active_status
+        user.deleted_at = deleted_at or datetime.now(timezone.utc)
+        self._session.add(user)
+
+    async def update_token_version(self, user: TUserModel) -> None:
+        user.token_version += 1
+        self._session.add(user)
 
     async def commit(self) -> None:
         try:

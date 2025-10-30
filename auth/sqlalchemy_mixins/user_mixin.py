@@ -34,6 +34,9 @@ class UserMixin:
     декларативной моделью (DeclarativeBase) конечного приложения.
     Связи с другими моделями (например, с ролями) должны
     быть определены в конечном приложении.
+
+    Поля created_at и updated_at требуются и предоставляются
+     миксином TimeStampMixin.
     """
     id: Mapped[UUID] = mapped_column(
         SQUUID,
@@ -61,6 +64,10 @@ class UserMixin:
     )
     is_active: Mapped[bool] = mapped_column(
         server_default=text('true'),
+        nullable=False
+    )
+    token_version: Mapped[int] = mapped_column(
+        default=0,
         nullable=False
     )
     deleted_at: Mapped[datetime | None] = mapped_column(

@@ -55,9 +55,15 @@ class UserRepositoryProtocol(Protocol[TUserModel]):
         """
         pass
 
-    async def delete(self, user: TUserModel) -> None:
+    async def soft_delete(self, user: TUserModel) -> None:
         """
         Удаляет пользователя из базы данных.
+        """
+        pass
+
+    async def update_token_version(self, user: TUserModel) -> None:
+        """
+        Обновляет версию токена пользователя.
         """
         pass
 

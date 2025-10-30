@@ -54,7 +54,7 @@ class User:
         """
         Проверяет все инварианты, необходимые для аутентификации пользователя.
         """
-        self._ensure_is_active()
+        self.ensure_is_active()
         self._ensure_is_not_deleted()
 
     def update_profile(
@@ -66,7 +66,7 @@ class User:
         """
         Обновляет профиль пользователя, соблюдая инварианты.
         """
-        self._ensure_is_active()
+        self.ensure_is_active()
         self._ensure_is_not_deleted()
         self._validate_incoming_profile_data()
 
@@ -82,12 +82,12 @@ class User:
         дату удаления.
         """
         self._ensure_is_not_deleted()
-        self._ensure_is_active()
+        self.ensure_is_active()
 
         self.is_active = False
         self.deleted_at = datetime.now(timezone.utc)
 
-    def _ensure_is_active(self) -> None:
+    def ensure_is_active(self) -> None:
         """
         Проверяет, что пользователь активен, иначе выбрасывает исключение.
 

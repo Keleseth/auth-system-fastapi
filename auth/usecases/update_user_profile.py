@@ -1,13 +1,15 @@
 from typing import Any
 
+from fastapi import HTTPException, status
+
 from auth.abstractions import TUserModel
-from auth.ports.user_repository import UserRepositoryProtocol
+from auth.domain.entities.user import User
 from auth.domain.exceptions import (
     InvalidUserDataError,
     UserInactiveError,
     UserAlreadyDeletedError,
 )
-from fastapi import HTTPException, status
+from auth.ports.user_repository import UserRepositoryProtocol
 
 
 async def update_user_profile(
@@ -16,15 +18,15 @@ async def update_user_profile(
     orm_user_obj: TUserModel,
     **fields: Any
 ) -> TUserModel | None:
-    user = user_repository.to_entity(
+    domain_user: User = user_repository.to_entity(
         orm_user_obj=orm_user_obj
     )
-    new_first_name = fields.get('first_name', user.first_name)
-    new_last_name = fields.get('last_name', user.last_name)
-    new_patronymic = fields.get('patronymic', user.patronymic)
+    new_first_name = fields.get('first_name', domain_user.first_name)
+    new_last_name = fields.get('last_name', domain_user.last_name)
+    new_patronymic = fields.get('patronymic', domain_user.patronymic)
 
     try:
-        user.update_profile(
+        domain_user.update_profile(
             first_name=new_first_name,
             last_name=new_last_name,
             patronymic=new_patronymic,

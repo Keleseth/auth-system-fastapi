@@ -16,7 +16,9 @@ class UserModelTypeHint:
     email: str
     hashed_password: str
     is_active: bool
+    token_version: int = 0
     created_at: datetime
     updated_at: datetime
+    deleted_at: datetime | None
 
 TUserModel = TypeVar('TUserModel', bound=UserModelTypeHint)

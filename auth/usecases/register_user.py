@@ -20,6 +20,9 @@ async def register_user(
     patronymic: str = None,
     **extra_fields: Dict[str, Any],
 ) -> TUserModel | None:
+    """
+    Регистрирует нового пользователя в системе.
+    """
     email_occupied = await user_repository.check_email_occupied(email)
     if email_occupied:
         raise HTTPException(
@@ -29,7 +32,7 @@ async def register_user(
     hashed_password = hasher.hash(password)
 
     try:
-        user = User(
+        domain_user: User = User(
             email=email,
             hashed_password=hashed_password,
             first_name=first_name,
@@ -42,7 +45,7 @@ async def register_user(
             status_code=status.HTTP_400_BAD_REQUEST
         )
     user_data = user_repository.map_entity_to_data(
-        user,
+        domain_user,
         **extra_fields
     )
     user = await user_repository.create(

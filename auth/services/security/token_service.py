@@ -7,7 +7,6 @@ from jose import jwt, JWTError
 
 from app.core.config import settings
 from auth.services.security.token_constants import (
-    ACCESS_TOKEN_LEEWAY_SECONDS,
     ACCESS_TOKEN_TTL_MINUTES,
     ALGORITHM
 )
@@ -24,7 +23,8 @@ class TokenServiceProtocol(Protocol):
     - Должен быть stateless, например через dataclass - frozen=True.
     - Не должен зависеть от FastAPI или ORM.
     - Отвечает только за создание и проверку токенов.
-    - В sub токена должен передаваться идентификатор пользователя (user_id).
+    - В sub токена должен передаваться идентификатор пользователя (user_id)
+        и token_version для возможности аннулирования токенов.
 
     Пример реализации см. в классе 'TokenService'.
     """
@@ -60,17 +60,18 @@ class TokenService:
     access_ttl: timedelta = timedelta(minutes=ACCESS_TOKEN_TTL_MINUTES)
     issuer: str | None = None
     audience: str | None = None
-    leeway_seconds: int = ACCESS_TOKEN_LEEWAY_SECONDS
 
     def provide_access_token(
         self,
         sub: str,
+        token_version: int,
         **extra: Any
     ) -> str:
         now = self._now()
         expires = now + self.access_ttl
         payload: Dict[str, Any] = {
             'sub': sub,
+            'token_version': token_version,
             'iat': int(now.timestamp()),
             'nbf': int(now.timestamp()),
             'exp': int(expires.timestamp()),
