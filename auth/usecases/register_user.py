@@ -5,9 +5,9 @@ from fastapi import HTTPException, status
 from auth.abstractions import TUserModel
 from auth.domain.entities.user import User
 from auth.domain.exceptions import InvalidUserDataError
-from auth.exceptions.custom_exceptions import CustomUniqueViolationError
 from auth.ports.user_repository import UserRepositoryProtocol
-from auth.security.password import DEFAULT_HASHER, PasswordHasher
+from auth.services.constants import EMAIL_OCCUPIED_ERROR
+from auth.services.security.password import DEFAULT_HASHER, PasswordHasher
 
 async def register_user(
     *,
@@ -23,7 +23,7 @@ async def register_user(
     email_occupied = await user_repository.check_email_occupied(email)
     if email_occupied:
         raise HTTPException(
-            detail='Email уже занят',
+            detail=EMAIL_OCCUPIED_ERROR,
             status_code=status.HTTP_400_BAD_REQUEST
         )
     hashed_password = hasher.hash(password)
@@ -36,9 +36,9 @@ async def register_user(
             last_name=last_name,
             patronymic=patronymic
         )
-    except InvalidUserDataError as e:
+    except InvalidUserDataError as error:
         raise HTTPException(
-            detail=str(e),
+            detail=str(error),
             status_code=status.HTTP_400_BAD_REQUEST
         )
     user_data = user_repository.map_entity_to_data(

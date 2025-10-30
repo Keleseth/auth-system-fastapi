@@ -4,6 +4,12 @@ from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
 
+    # UUID пользователей для проверки прав доступа
+    AUTHOR_USER_UUID: str
+    ADMIN_USER_UUID: str
+    NOT_AUTHOR_USER_UUID: str
+    MODERATOR_USER_UUID: str
+
     DB_TYPE: str
     DB_API: str
     DB_USER: str

@@ -1,20 +1,17 @@
-from datetime import timedelta
+from fastapi import APIRouter, Depends
 
-from fastapi import APIRouter
+from app.api.v1.router_dependencies import (
+    token_service,
+    author_or_admin_only
+)
 
 from app.db.dependencies import get_user_repository
-from app.core.config import settings
-from auth.api.router import create_auth_router
-from auth.security.token_service import TokenService
+from app.models.mock_data import MockData
+from app.schemas.mock_schemas import ReadMockDataChocolate
+from auth.api.v1.router import create_auth_router
 
 router = APIRouter(
     prefix='/v1',
-)
-
-token_service = TokenService(
-    secret=settings.JWT_SECRET_KEY,
-    algorithm=settings.JWT_ALGORITHM,    
-    access_ttl=timedelta(minutes=settings.JWT_ACCESS_TOKEN_LIFESPAN),
 )
 
 auth_router = create_auth_router(
@@ -25,3 +22,13 @@ auth_router = create_auth_router(
 )
 
 router.include_router(auth_router)
+
+@router.get(
+    '/chocolates/{id}',
+    response_model=ReadMockDataChocolate
+)
+async def get_chocolate(
+    id: str,
+    object: MockData = Depends(author_or_admin_only)
+):
+    return ReadMockDataChocolate(chocolate=object.chocolate)
