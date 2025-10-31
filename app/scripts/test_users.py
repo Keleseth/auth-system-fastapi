@@ -56,7 +56,9 @@ async def create_admin_author_moderator(session: AsyncSession) -> None:
         },
     ]
     for data in users_data:
-        result = await session.execute(select(UserModel).where(UserModel.email == data["email"]))
+        result = await session.execute(
+            select(UserModel).where(UserModel.id == data['id'])
+        )
         user = result.scalars().first()
         if not user:
             hashed_pw = DEFAULT_HASHER.hash(data['password'])
