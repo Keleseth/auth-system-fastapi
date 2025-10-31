@@ -1,4 +1,5 @@
 import re
+from typing import TypeVar
 
 from sqlalchemy.orm import DeclarativeBase, declared_attr
 
@@ -14,3 +15,6 @@ class BaseModel(DeclarativeBase):
         Определяет название таблиц всех наследников в формате snake_case.
         """
         return re.sub(r'(?<!^)(?=[A-Z])', '_', cls.__name__).lower()
+
+
+ModelType = TypeVar('ModelType', bound=BaseModel)

@@ -12,10 +12,6 @@ from auth.schemas.user_auth_schemas import (
     LoginResponseSchemaT,
     UpdateUserSchema,
     UpdateUserSchemaT,
-    UpdateUserRoleSchema,
-    UpdateUserRoleSchemaT,
-    ReadUserSchemaAdmin,
-    ReadUserSchemaAdminT,
 )
 
 
@@ -26,8 +22,6 @@ class AuthSchemas(Generic[
     LoginRequestSchemaT,
     LoginResponseSchemaT,
     UpdateUserSchemaT,
-    UpdateUserRoleSchemaT,
-    ReadUserSchemaAdminT,
 ]):
     """
     Датакласс - контейнер для кастомных и дефолтных схем системы
@@ -43,5 +37,3 @@ class AuthSchemas(Generic[
     update: type[UpdateUserSchemaT] = UpdateUserSchema
     login_request: type[LoginRequestSchemaT] = LoginRequestSchema
     login_response: type[LoginResponseSchemaT] = LoginResponseSchema
-    update_role: type[UpdateUserRoleSchemaT] = UpdateUserRoleSchema
-    read_user_admin: type[ReadUserSchemaAdminT] = ReadUserSchemaAdmin

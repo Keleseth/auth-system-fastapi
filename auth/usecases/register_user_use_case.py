@@ -5,6 +5,7 @@ from fastapi import HTTPException, status
 from auth.abstractions import TUserModel
 from auth.domain.entities.user import User
 from auth.domain.exceptions import InvalidUserDataError
+from auth.exceptions.custom_exceptions import RepositoryError
 from auth.ports.user_repository import UserRepositoryProtocol
 from auth.services.constants import EMAIL_OCCUPIED_ERROR
 from auth.services.security.password import DEFAULT_HASHER, PasswordHasher
@@ -21,7 +22,8 @@ async def register_user(
     **extra_fields: Dict[str, Any],
 ) -> TUserModel | None:
     """
-    Регистрирует нового пользователя в системе.
+    Регистрирует нового пользователя, проверяя уникальность email,
+    валидируя данные, хешируя пароль и создавая запись.
     """
     email_occupied = await user_repository.check_email_occupied(email)
     if email_occupied:
@@ -54,6 +56,9 @@ async def register_user(
     try:
         await user_repository.commit()
         return user
-    except Exception:
+    except RepositoryError as error:
         await user_repository.rollback()
-        return None
+        raise HTTPException(
+            detail=str(error),
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+        ) from error

@@ -61,23 +61,3 @@ def build_get_current_user_dependency(
             )
         return user
     return get_current_user
-
-
-def build_admin_only_dependency(
-    get_current_user_dependency: Callable[..., Any],
-):
-    """
-    Проверка токена пользователя и права администратора.
-    """
-    async def admin_only(
-        current_user: Any = Depends(
-            get_current_user_dependency
-        ),
-    ) -> None:
-        is_admin = any(role.name == 'admin' for role in current_user.roles)
-        if not is_admin:
-            raise HTTPException(
-                status_code=403,
-                detail='Требуются права администратора.'
-            )
-    return admin_only

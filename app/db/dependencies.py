@@ -4,15 +4,14 @@ from fastapi import Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import sessionmaker
 
-from app.core.config import settings
 from app.models.user import UserModel
-from auth.abstractions import TUserModel
-from auth.ports.user_repository import (
-    UserRepositoryProtocol
-)
 from auth.adapters.sqlalchemy.user_repository import (
     SQLAlchemyUserRepository
 )
+from auth.ports.user_repository import (
+    UserRepositoryProtocol
+)
+
 
 
 def get_sessionmaker(request: Request) -> sessionmaker:
@@ -34,7 +33,7 @@ def get_user_repository(
     session: AsyncSession = Depends(get_async_session),
 ) -> UserRepositoryProtocol:
     """
-    Склеивает внутри SQLAlchemyUserRepository 
+    Склеивает внутри адаптер на протоколе UserRepositoryProtocol(SQLAlchemy)
     с сессией и моделью пользователя.
     """
     return SQLAlchemyUserRepository(
