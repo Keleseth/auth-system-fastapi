@@ -1,13 +1,14 @@
 from fastapi import APIRouter, Depends
 
+from app.api.v1.endpoints import (
+    chocolate_router,
+    admin_manager_router
+)
 from app.api.v1.router_dependencies import (
     token_service,
-    author_or_admin_only
 )
 
 from app.db.dependencies import get_user_repository
-from app.models.mock_data import MockData
-from app.schemas.mock_schemas import ReadMockDataChocolate
 from auth.api.v1.router import create_auth_router
 
 router = APIRouter(
@@ -22,13 +23,5 @@ auth_router = create_auth_router(
 )
 
 router.include_router(auth_router)
-
-@router.get(
-    '/chocolates/{id}',
-    response_model=ReadMockDataChocolate
-)
-async def get_chocolate(
-    id: str,
-    object: MockData = Depends(author_or_admin_only)
-):
-    return ReadMockDataChocolate(chocolate=object.chocolate)
+router.include_router(chocolate_router)
+router.include_router(admin_manager_router)

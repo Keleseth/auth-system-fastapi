@@ -9,10 +9,7 @@ from .user_auth_schemas import (
     ReadUserSchemaT,
     UpdateUserSchema,
     UpdateUserSchemaT,
-    UpdateUserRoleSchema,
-    UpdateUserRoleSchemaT
 )
-from .role_schemas import ReadRoleSchema
 
 __all__ = [
     'CreateUserSchema',
@@ -27,5 +24,4 @@ __all__ = [
     'UpdateUserSchemaT',
     'UpdateUserRoleSchema',
     'UpdateUserRoleSchemaT',
-    'ReadRoleSchema',
 ]

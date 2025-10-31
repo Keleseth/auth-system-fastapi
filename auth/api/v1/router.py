@@ -48,7 +48,6 @@ from auth.schemas.user_auth_schemas import (
     LoginRequestSchemaT,
     LoginResponseSchemaT,
     ReadUserSchemaT,
-    UpdateUserRoleSchemaT,
     UpdateUserSchemaT,
 )
 from auth.schemas.schemas_container import AuthSchemas
@@ -62,12 +61,11 @@ from auth.usecases import (
     authenticate_user,
 )
 from auth.api.v1.dependencies import (
-    build_admin_only_dependency,
     build_get_current_user_dependency
 )
-from auth.usecases.admin_update_user import update_user_role
-from auth.usecases.logout_user import logout_user
-from auth.usecases.soft_delete import soft_delete_usecase
+from auth.usecases.admin_update_user_use_case import update_user_role
+from auth.usecases.logout_user_use_case import logout_user
+from auth.usecases.soft_delete_use_case import soft_delete_usecase
 
 
 def create_auth_router(
@@ -80,7 +78,6 @@ def create_auth_router(
         LoginResponseSchemaT,
         ReadUserSchemaT,
         UpdateUserSchemaT,
-        UpdateUserRoleSchemaT,
     ] = AuthSchemas(),
     password_hasher: PasswordHasher = DEFAULT_HASHER,
     prefix: str = '/auth',
@@ -117,11 +114,6 @@ def create_auth_router(
     get_current_user = build_get_current_user_dependency(
         token_service_dependency=token_service_dependency,
         user_repository_dependency=user_repository_dependency,
-    )
-
-    # Зависимость, разрешающая доступ только администраторам
-    admin_only = build_admin_only_dependency(
-        get_current_user_dependency=get_current_user
     )
 
     @router.post(

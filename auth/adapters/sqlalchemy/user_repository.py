@@ -17,7 +17,6 @@ from auth.abstractions import TUserModel
 from auth.domain.entities.user import User
 from auth.exceptions.custom_exceptions import RepositoryError
 from auth.ports.user_repository import UserRepositoryProtocol
-from auth.services.constants import DELETE_USER_ERROR
 
 
 class SQLAlchemyUserRepository(UserRepositoryProtocol):
@@ -33,7 +32,11 @@ class SQLAlchemyUserRepository(UserRepositoryProtocol):
         - Все методы репозитория являются асинхронными для единообразия.
     """
 
-    def __init__(self, session: AsyncSession, user_model: type[TUserModel]) -> None:
+    def __init__(
+        self,
+        session: AsyncSession,
+        user_model: type[TUserModel]
+    ) -> None:
         self._session = session
         self._user_model = user_model
 

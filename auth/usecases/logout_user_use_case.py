@@ -1,4 +1,3 @@
-
 from fastapi import HTTPException, status
 
 from auth.abstractions import TUserModel
@@ -8,29 +7,27 @@ from auth.exceptions.custom_exceptions import RepositoryError
 from auth.ports.user_repository import UserRepositoryProtocol
 
 
-
-async def soft_delete_usecase(
+async def logout_user(
     *,
     orm_user_obj: TUserModel,
-    user_repository: UserRepositoryProtocol
+    user_repository: UserRepositoryProtocol,
 ) -> None:
-    domain_user: User = user_repository.to_entity(orm_user_obj)
+    """
+    Разлогинивает пользователя: инкрементирует token_version
+    делая старые токены недействительными.
+    """
+    domain_user: User = user_repository.to_entity(orm_user_obj=orm_user_obj)
     try:
-        domain_user.soft_delete()
-    except (UserAlreadyDeletedError, UserInactiveError) as error:
+        domain_user.ensure_is_active()
+    except (UserInactiveError, UserAlreadyDeletedError) as error:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail=str(error)
+            detail=str(error),
         )
-    await user_repository.soft_delete(
-        user=orm_user_obj,
-        active_status=domain_user.is_active,
-        deleted_at=domain_user.deleted_at
-    )
+    await user_repository.update_token_version(orm_user_obj)
     try:
         await user_repository.commit()
     except RepositoryError as error:
-        await user_repository.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=str(error)

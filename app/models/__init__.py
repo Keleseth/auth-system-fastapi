@@ -5,7 +5,7 @@ from .user import UserModel
 
 __all__ = [
     'BaseModel',
-    "User",
-    "Role",
-    "user_role_association",
+    'UserModel',
+    'RoleModel',
+    'user_role_association',
 ]

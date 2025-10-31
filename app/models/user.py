@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 class UserModel(BaseModel, UserMixin, TimeStampMixin):
     """
     Модель пользователя.
-    Наследуется от Base, UserMixin и TimeStampMixin.
+
     Связь с ролями определяется здесь.
     """
 

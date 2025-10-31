@@ -1,6 +1,5 @@
 from contextlib import asynccontextmanager
 from typing import AsyncIterator
-from uuid import uuid4
 
 from fastapi import FastAPI
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine

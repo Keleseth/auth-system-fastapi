@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 class RoleModel(BaseModel, RoleMixin, TimeStampMixin):
     """
     Модель роли пользователя.
-    Наследуется от Base, RoleMixin и TimeStampMixin.
+
     Связь с пользователями определяется здесь.
     """
     users: Mapped[list['UserModel']] = relationship(

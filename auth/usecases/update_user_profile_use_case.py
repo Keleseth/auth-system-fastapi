@@ -9,6 +9,7 @@ from auth.domain.exceptions import (
     UserInactiveError,
     UserAlreadyDeletedError,
 )
+from auth.exceptions.custom_exceptions import RepositoryError
 from auth.ports.user_repository import UserRepositoryProtocol
 
 
@@ -18,6 +19,17 @@ async def update_user_profile(
     orm_user_obj: TUserModel,
     **fields: Any
 ) -> TUserModel | None:
+    """
+    Обновляет профиль пользователя:
+      -first_name
+      -last_name
+      -patronymic
+
+    Проверяет валидность данных и статус пользователя пользователя:
+      - is_active
+      - deleted_at.
+    """
+
     domain_user: User = user_repository.to_entity(
         orm_user_obj=orm_user_obj
     )
@@ -46,6 +58,9 @@ async def update_user_profile(
     try:
         await user_repository.commit()
         return orm_user_obj
-    except Exception:
+    except RepositoryError as error:
         await user_repository.rollback()
-        return None
+        raise HTTPException(
+            detail=str(error),
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+        ) from error

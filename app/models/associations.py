@@ -1,3 +1,6 @@
+"""
+Модель ассоциации между пользователями и ролями.
+"""
 from sqlalchemy import Table, Column, ForeignKey, Integer
 from sqlalchemy import UUID as SQUUID
 
