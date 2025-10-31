@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter
 
 from app.api.v1.endpoints import (
     chocolate_router,
