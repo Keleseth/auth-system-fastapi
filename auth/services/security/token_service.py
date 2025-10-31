@@ -1,11 +1,10 @@
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, Optional, Protocol
+from typing import Any, Dict, Protocol
 
 from fastapi import HTTPException, status
 from jose import jwt, JWTError
 
-from app.core.config import settings
 from auth.services.security.token_constants import (
     ACCESS_TOKEN_TTL_MINUTES,
     ALGORITHM
