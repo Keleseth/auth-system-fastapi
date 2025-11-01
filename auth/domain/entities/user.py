@@ -68,11 +68,11 @@ class User:
         """
         self.ensure_is_active()
         self._ensure_is_not_deleted()
-        self._validate_incoming_profile_data()
 
         self.first_name = first_name
         self.last_name = last_name
         self.patronymic = patronymic
+        self._validate_incoming_profile_data()
 
     def soft_delete(self) -> None:
         """
@@ -92,7 +92,8 @@ class User:
         Проверяет, что пользователь активен, иначе выбрасывает исключение.
 
         Предназначается только для операций по изменению
-        состояния пользователя. Не предназнаен для аутентификации.
+        состояния пользователя. Не предназначен для использования в системе
+        аутентификации, только проверка инварианта.
         """
         if not self.is_active:
             raise UserInactiveError(

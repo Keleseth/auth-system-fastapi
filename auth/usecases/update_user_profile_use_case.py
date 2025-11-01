@@ -54,10 +54,10 @@ async def update_user_profile(
             detail=str(error),
         )
 
-    await user_repository.update(orm_user_obj, **fields)
+    updated_user = await user_repository.update(orm_user_obj, **fields)
     try:
         await user_repository.commit()
-        return orm_user_obj
+        return updated_user
     except RepositoryError as error:
         await user_repository.rollback()
         raise HTTPException(

@@ -12,7 +12,9 @@ from app.core.config import settings
 from app.core.constants import LIMITED_ACCESS, OBJECT_NOT_FOUND
 from app.db.dependencies import get_user_repository
 from app.models.mock_data import mock_objects, MockData
-from auth.api.v1.dependencies import build_get_current_user_dependency
+from auth.api.v1.dependencies import (
+    build_get_current_user_dependency
+)
 from auth.services.constants import (
     INVALID_ACCESS_TOKEN_ERROR,
     USER_NOT_FOUND_ERROR
@@ -40,44 +42,12 @@ token_service_dependency = provide_from_instance(token_service)
 def get_mock_data():
     return mock_objects
 
-
-def build_get_current_user_dependency(
-    *,
-    token_service_dependency: Callable[..., TokenServiceProtocol],
-    user_repository_dependency: Callable[..., Any],
-):
-    async def get_current_user(
-        authorization: str = Header(),
-        token_service: TokenServiceProtocol = Depends(
-            token_service_dependency
-        ),
-        user_repository: Any = Depends(
-            user_repository_dependency
-        ),
-    ) -> Callable[[], Any]:
-        token = authorization.removeprefix('Bearer ').strip()
-        try:
-            payload = token_service.decode_access(token)
-        except JWTError:
-            raise HTTPException(
-                status_code=401,
-                detail=INVALID_ACCESS_TOKEN_ERROR
-            )
-        try:
-            user = await user_repository.get_user_by_id(payload.get('sub'))
-        except Exception:
-            raise HTTPException(
-                status_code=401,
-                detail=USER_NOT_FOUND_ERROR
-            )
-        return user
-    return get_current_user
-
+# Фабрика build_get_current_user_dependency, но get_current_user_dependency
+# вшит в роутер auth библиотеки напрямую, потому нужна своя версия в app.
 get_current_user_dependency = build_get_current_user_dependency(
     token_service_dependency=token_service_dependency,
     user_repository_dependency=get_user_repository
 )
-
 
 async def author_or_admin_only(
     id,

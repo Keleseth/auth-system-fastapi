@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from fastapi import HTTPException, status
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -16,14 +18,14 @@ from app.crud import (
 
 
 async def add_role_to_user(
-        user_id: int,
+        user_id: UUID,
         role_id: int,
         user_repository: UserRepositoryProtocol,
     ) -> UserModel:
         """
         Добавляет связь между пользователем и ролью.
         """
-        session = user_repository._session
+        session = user_repository.get_session()
 
         orm_user_obj = await user_repository.get_user_by_id(user_id)
         if orm_user_obj is None:
@@ -66,7 +68,7 @@ async def remove_role_from_user(
         """
         Удаляет связь пользователя с ролью.
         """
-        session = user_repository._session
+        session = user_repository.get_session()
 
         orm_user_obj = await user_repository.get_user_by_id(user_id)
         if orm_user_obj is None:
