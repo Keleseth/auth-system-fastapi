@@ -33,11 +33,11 @@ def build_get_current_user_dependency(
         user_repository: Any = Depends(
             user_repository_dependency
         ),
-    ) -> Any:
+    ) -> Callable[[], Any]:
         token = authorization.removeprefix(TOKEN_TYPE).strip()
         try:
             payload = token_service.decode_access(token)
-        except JWTError:
+        except Exception:
             raise HTTPException(
                 status_code=401,
                 detail=INVALID_ACCESS_TOKEN_ERROR

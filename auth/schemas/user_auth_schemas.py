@@ -14,40 +14,6 @@ from pydantic import (
 )
 
 
-class CreateUserSchema(BaseModel):
-    """
-    Базовая входная схема для регистрации пользователя.
-    """
-
-    email: EmailStr
-    password: str
-    first_name: str | None = None
-    last_name: str | None = None
-    patronymic: str | None = None
-
-    @field_validator('password')
-    def validate_password(cls, value: str) -> str:
-        if len(value) < 8:
-            raise ValueError(
-                'Пароль должен быть не короче 8 символов'
-            )
-        return value
-
-
-class ReadUserSchema(BaseModel):
-    """
-    Базовая выходная схема для отдачи данных пользователя клиенту.
-    """
-
-    id: Any
-    email: EmailStr
-    last_name: str | None = None
-    first_name: str | None = None
-    patronymic: str | None = None
-
-    model_config = ConfigDict(from_attributes=True)
-
-
 class LoginRequestSchema(BaseModel):
     """
     Базовая входная схема для аутентификации пользователя.
@@ -65,6 +31,30 @@ class UpdateUserSchema(BaseModel):
     first_name: str | None = None
     last_name: str | None = None
     patronymic: str | None = None
+
+
+class CreateUserSchema(LoginRequestSchema, UpdateUserSchema):
+    """
+    Базовая входная схема для регистрации пользователя.
+    """
+
+    @field_validator('password')
+    def validate_password(cls, value: str) -> str:
+        if len(value) < 8:
+            raise ValueError(
+                'Пароль должен быть не короче 8 символов'
+            )
+        return value
+
+
+class ReadUserSchema(UpdateUserSchema):
+    """
+    Базовая выходная схема для отдачи данных пользователя клиенту.
+    """
+
+    email: EmailStr
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class LoginResponseSchema(BaseModel):

@@ -42,6 +42,7 @@ from auth.services.security import (
     DEFAULT_HASHER,
     PasswordHasher,
     TokenService,
+    TokenServiceProtocol,
 )
 from auth.schemas.user_auth_schemas import (
     CreateUserSchemaT,
@@ -51,10 +52,6 @@ from auth.schemas.user_auth_schemas import (
     UpdateUserSchemaT,
 )
 from auth.schemas.schemas_container import AuthSchemas
-from auth.services.security.token_service import (
-    TokenService,
-    TokenServiceProtocol,
-)
 from auth.usecases import (
     register_user,
     update_user_profile,
@@ -63,7 +60,6 @@ from auth.usecases import (
 from auth.api.v1.dependencies import (
     build_get_current_user_dependency
 )
-from auth.usecases.admin_update_user_use_case import update_user_role
 from auth.usecases.logout_user_use_case import logout_user
 from auth.usecases.soft_delete_use_case import soft_delete_usecase
 
@@ -102,8 +98,8 @@ def create_auth_router(
 
     router = APIRouter(prefix=prefix, tags=tags)
 
-    def provide_token_service(token_service: TokenService):
-        def _dependency() -> TokenService:
+    def provide_token_service(token_service: TokenServiceProtocol):
+        def _dependency() -> TokenServiceProtocol:
             return token_service
         return _dependency
 
@@ -176,7 +172,7 @@ def create_auth_router(
         ),
     ):
         await logout_user(
-            current_user=current_user,
+            orm_user_obj=current_user,
             user_repository=user_repository,
         )
 
@@ -201,7 +197,7 @@ def create_auth_router(
         return user
 
 
-    @router.post(
+    @router.delete(
         '/users/me/delete',
         status_code=status.HTTP_204_NO_CONTENT,
     )
@@ -212,7 +208,7 @@ def create_auth_router(
         ),
     ):
         await soft_delete_usecase(
-            user=current_user,
+            orm_user_obj=current_user,
             user_repository=user_repository,
         )
 

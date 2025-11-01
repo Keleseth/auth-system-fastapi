@@ -10,7 +10,7 @@ from datetime import datetime, timezone
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import exists, func, select
+from sqlalchemy import exists, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from auth.abstractions import TUserModel
@@ -81,7 +81,8 @@ class SQLAlchemyUserRepository(UserRepositoryProtocol):
     async def update(self, user: TUserModel, **fields: Any) -> TUserModel:
         for key, value in fields.items():
             setattr(user, key, value)
-        await self.add(user)
+        self._session.add(user)
+        return user
 
 
     async def soft_delete(
@@ -141,3 +142,11 @@ class SQLAlchemyUserRepository(UserRepositoryProtocol):
             updated_at=orm_user_obj.updated_at,
             deleted_at=orm_user_obj.deleted_at
         )
+
+    def get_session(self) -> AsyncSession:
+        """
+        Возвращает рабочую сессию.
+
+        Метод нужен для передачи сессии в другие репозитории.
+        """
+        return self._session

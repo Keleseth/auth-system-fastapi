@@ -4,6 +4,7 @@
 Порт (UserRepositoryProtocol) - контракт для use-case
 со всеми нужными операциями.
 """
+from datetime import datetime
 from typing import Protocol, Any
 from uuid import UUID
 
@@ -36,9 +37,6 @@ class UserRepositoryProtocol(Protocol[TUserModel]):
         """
         pass
 
-    async def add(self, user: TUserModel) -> None:
-        pass
-
     async def create(self, **fields: Any) -> TUserModel:
         """
         Создает нового пользователя в базе данных.
@@ -55,7 +53,12 @@ class UserRepositoryProtocol(Protocol[TUserModel]):
         """
         pass
 
-    async def soft_delete(self, user: TUserModel) -> None:
+    async def soft_delete(
+        self,
+        user: TUserModel,
+        active_status: bool = False,
+        deleted_at: datetime | None = None,
+    ) -> None:
         """
         Удаляет пользователя из базы данных.
         """
@@ -88,5 +91,13 @@ class UserRepositoryProtocol(Protocol[TUserModel]):
     def to_entity(self, orm_user_obj: Any) -> User:
         """
         TODO продумать реализацию.
+        """
+        pass
+
+    def get_session(self) -> Any:
+        """
+        Возвращает текущую сессию базы данных.
+
+        Метод будет полезен для операций с сессией вне предела репозитория.
         """
         pass
