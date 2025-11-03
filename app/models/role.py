@@ -24,3 +24,9 @@ class RoleModel(BaseModel, RoleMixin, TimeStampMixin):
         back_populates='roles',
         lazy='selectin'
     )
+
+    def __str__(self) -> str:
+        return f'Роль: {self.name}'
+
+    def __repr__(self):
+        return f'<Роль: id={self.id} название={self.name}>'
