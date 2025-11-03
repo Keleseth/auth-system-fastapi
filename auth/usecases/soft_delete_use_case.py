@@ -9,7 +9,7 @@ from auth.ports.user_repository import UserRepositoryProtocol
 
 
 
-async def soft_delete_usecase(
+async def soft_delete_user(
     *,
     orm_user_obj: TUserModel,
     user_repository: UserRepositoryProtocol
@@ -39,3 +39,6 @@ async def soft_delete_usecase(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=str(error)
         ) from error
+
+def soft_delete_use_case_dependency():
+    return soft_delete_user

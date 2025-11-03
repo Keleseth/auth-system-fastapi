@@ -32,3 +32,6 @@ async def logout_user(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=str(error)
         ) from error
+
+def logout_use_case_dependency():
+    return logout_user

@@ -4,7 +4,12 @@
 """
 from typing import Any, Callable
 
-from fastapi import Depends, HTTPException, Header
+from fastapi import (
+    Depends,
+    HTTPException,
+    Header,
+    status
+)
 from jose import JWTError
 
 from auth.services.constants import (
@@ -39,25 +44,25 @@ def build_get_current_user_dependency(
             payload = token_service.decode_access(token)
         except Exception:
             raise HTTPException(
-                status_code=401,
-                detail=INVALID_ACCESS_TOKEN_ERROR
+                detail=INVALID_ACCESS_TOKEN_ERROR,
+                status_code=status.HTTP_401_UNAUTHORIZED
             )
         try:
             user = await user_repository.get_user_by_id(payload.get('sub'))
         except Exception:
             raise HTTPException(
-                status_code=401,
-                detail=USER_NOT_FOUND_ERROR
+                detail=USER_NOT_FOUND_ERROR,
+                status_code=status.HTTP_401_UNAUTHORIZED
             )
         if not user.is_active:
             raise HTTPException(
-                status_code=403,
-                detail=INACTIVE_USER
+                detail=INACTIVE_USER,
+                status_code=status.HTTP_403_FORBIDDEN
             )
         if user.token_version != payload.get('token_version'):
             raise HTTPException(
-                status_code=401,
-                detail=INVALID_ACCESS_TOKEN_ERROR
+                detail=INVALID_ACCESS_TOKEN_ERROR,
+                status_code=status.HTTP_401_UNAUTHORIZED
             )
         return user
     return get_current_user

@@ -62,3 +62,6 @@ async def register_user(
             detail=str(error),
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
         ) from error
+
+def register_use_case_dependency():
+    return register_user

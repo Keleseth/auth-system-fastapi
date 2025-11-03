@@ -53,20 +53,20 @@ from auth.schemas.user_auth_schemas import (
 )
 from auth.schemas.schemas_container import AuthSchemas
 from auth.usecases import (
-    register_user,
-    update_user_profile,
-    authenticate_user,
+    authenticate_use_case_dependency,
+    logout_use_case_dependency,
+    register_use_case_dependency,
+    soft_delete_use_case_dependency,
+    update_profile_use_case_dependency,
 )
 from auth.api.v1.dependencies import (
     build_get_current_user_dependency
 )
-from auth.usecases.logout_user_use_case import logout_user
-from auth.usecases.soft_delete_use_case import soft_delete_usecase
 
 
 def create_auth_router(
-    user_repository_dependency: Callable[..., UserRepositoryProtocol],
     *,
+    user_repository_dependency: Callable[..., UserRepositoryProtocol],
     token_service: TokenServiceProtocol,
     schemas: AuthSchemas[
         CreateUserSchemaT,
@@ -78,6 +78,9 @@ def create_auth_router(
     password_hasher: PasswordHasher = DEFAULT_HASHER,
     prefix: str = '/auth',
     tags: list[str] | None = None,
+    test_mode: bool = False,
+    _mock_get_current_user: Callable[..., UserModelTypeHint] | None = None,
+
     ) -> APIRouter:
     """
     Фабрика роутера для системы аутентификации и авторизации.
@@ -94,6 +97,11 @@ def create_auth_router(
     - password_hasher: реализация интерфейса PasswordHasher. 
     DEFAULT_HASHER - дефолтная реализация PasswordHasher.
     - prefix/tags: стандартные параметры APIRouter.
+    - test_mode - флаг для отладки и подмены внутрефабричных
+    зависимостей моками.
+    - _mock_get_current_user - мок зависимость получения текущего пользователя
+    P.S. _mock_get_current_user нужен только для тестов внутри библиотеки,
+    и будет заменен в обновлениях на внедрение глобальной зависимости.
     """
 
     router = APIRouter(prefix=prefix, tags=tags)
@@ -106,11 +114,15 @@ def create_auth_router(
     # Зависимость для внедрения сервиса работы с токенами
     token_service_dependency = provide_token_service(token_service)
 
-    # TODO протокольную аннотацию Depends не пропускает. Обойти
-    get_current_user = build_get_current_user_dependency(
-        token_service_dependency=token_service_dependency,
-        user_repository_dependency=user_repository_dependency,
-    )
+    # Mock зависимость получения текущего пользователя для тестов
+    if test_mode and _mock_get_current_user is not None:
+        get_current_user = _mock_get_current_user
+    else:
+        # Зависимость получения текущего аутентифицированного пользователя
+        get_current_user = build_get_current_user_dependency(
+            token_service_dependency=token_service_dependency,
+            user_repository_dependency=user_repository_dependency,
+        )
 
     @router.post(
         '/register',
@@ -121,6 +133,9 @@ def create_auth_router(
         user_schema: schemas.create,  # type: ignore[valid-type]
         user_repository: UserRepositoryProtocol = Depends(
             user_repository_dependency
+        ),
+        register_user: Callable = Depends(
+            register_use_case_dependency
         ),
     ):
         user = await register_user(
@@ -149,6 +164,9 @@ def create_auth_router(
         token_service: TokenService = Depends(
             token_service_dependency
         ),
+        authenticate_user: Callable = Depends(
+            authenticate_use_case_dependency
+        ),
     ):
         data = user_schema.model_dump()
         token = await authenticate_user(
@@ -170,6 +188,9 @@ def create_auth_router(
         user_repository: UserRepositoryProtocol = Depends(
             user_repository_dependency
         ),
+        logout_user: Callable = Depends(
+            logout_use_case_dependency
+        ),
     ):
         await logout_user(
             orm_user_obj=current_user,
@@ -187,6 +208,9 @@ def create_auth_router(
         current_user: UserModelTypeHint = Depends(get_current_user),
         user_repository: UserRepositoryProtocol = Depends(
             user_repository_dependency
+        ),
+        update_user_profile: Callable = Depends(
+            update_profile_use_case_dependency
         ),
     ):
         user = await update_user_profile(
@@ -206,8 +230,11 @@ def create_auth_router(
         user_repository: UserRepositoryProtocol = Depends(
             user_repository_dependency
         ),
+        soft_delete: Callable = Depends(
+            soft_delete_use_case_dependency
+        ),
     ):
-        await soft_delete_usecase(
+        await soft_delete(
             orm_user_obj=current_user,
             user_repository=user_repository,
         )
