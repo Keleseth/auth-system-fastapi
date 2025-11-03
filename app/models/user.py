@@ -25,3 +25,9 @@ class UserModel(BaseModel, UserMixin, TimeStampMixin):
         back_populates='users',
         lazy='selectin'
     )
+
+    def __str__(self) -> str:
+        return f'Пользователь: {self.name}'
+
+    def __repr__(self):
+        return f'<Пользователь: id={self.id} email={self.email}>'

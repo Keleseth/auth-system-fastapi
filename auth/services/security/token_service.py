@@ -28,7 +28,12 @@ class TokenServiceProtocol(Protocol):
     Пример реализации см. в классе 'TokenService'.
     """
 
-    def provide_access_token(self, sub: str, **extra: Any) -> str:
+    def provide_access_token(
+        self,
+        sub: str,
+        token_version: int,
+        **extra: Any
+    ) -> str:
         """
         Предоставляет токен доступа внедряя sub и extra поля.
         """
