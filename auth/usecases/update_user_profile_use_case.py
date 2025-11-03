@@ -64,3 +64,6 @@ async def update_user_profile(
             detail=str(error),
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
         ) from error
+
+def update_profile_use_case_dependency():
+    return update_user_profile

@@ -65,3 +65,7 @@ async def authenticate_user(
         token_version=int(orm_user_obj.token_version)
     )
     return token
+
+
+def authenticate_use_case_dependency():
+    return authenticate_user
