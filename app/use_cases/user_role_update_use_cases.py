@@ -1,10 +1,11 @@
-from uuid import UUID
-
 from fastapi import HTTPException, status
 from sqlalchemy.exc import SQLAlchemyError
 
+from app.api.v1.utils import get_user_max_permission_level
 from app.core.constants import (
     APPLY_ROLE_TO_USER_ERROR,
+    CANT_PROMOTE_HIGHER_OR_EQUAL_ROLE,
+    CANT_REMOVE_HIGHER_OR_EQUAL_ROLE,
     ROLE_NOT_FOUND,
 )
 from app.models.user import UserModel
@@ -18,6 +19,7 @@ from app.crud import (
 
 async def add_role_to_user(
         *,
+        current_user: UserModel,
         orm_user_obj: UserModel,
         role_id: int,
         user_repository: UserRepositoryProtocol,
@@ -25,7 +27,6 @@ async def add_role_to_user(
         """
         Добавляет связь между пользователем и ролью.
         """
-        print('---------------------------------вошел в юзкейс -----------------------------------')
         session = user_repository.get_session()
         orm_role_obj = await role_crud.get_role(
             role_id=role_id,
@@ -35,6 +36,15 @@ async def add_role_to_user(
             raise HTTPException(
                 detail=ROLE_NOT_FOUND.format(role_id=role_id),
                 status_code=status.HTTP_404_NOT_FOUND,
+            )
+        if (
+            not current_user.is_superuser
+            and get_user_max_permission_level(current_user)
+            <= orm_role_obj.permission_level
+        ):
+            raise HTTPException(
+                detail=CANT_PROMOTE_HIGHER_OR_EQUAL_ROLE,
+                status_code=status.HTTP_403_FORBIDDEN,
             )
         try:
             await admin_manager_crud.add_role(
@@ -58,6 +68,7 @@ async def add_role_to_user(
 
 async def remove_role_from_user(
         *,
+        current_user: UserModel,
         orm_user_obj: UserModel,
         role_id: int,
         user_repository: UserRepositoryProtocol,
@@ -74,6 +85,15 @@ async def remove_role_from_user(
             raise HTTPException(
                 detail=ROLE_NOT_FOUND.format(role_id=role_id),
                 status_code=status.HTTP_404_NOT_FOUND,
+            )
+        if (
+            not current_user.is_superuser
+            and get_user_max_permission_level(current_user)
+            <= orm_role_obj.permission_level
+        ):
+            raise HTTPException(
+                detail=CANT_REMOVE_HIGHER_OR_EQUAL_ROLE,
+                status_code=status.HTTP_403_FORBIDDEN,
             )
         try:
             await admin_manager_crud.remove_role_from_user(

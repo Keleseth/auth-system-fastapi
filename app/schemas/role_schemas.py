@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class ReadRoleSchema(BaseModel):
@@ -11,9 +11,9 @@ class ReadRoleSchema(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-class UpdateUserRoleSchema(BaseModel):
+class UpdateRoleSchema(BaseModel):
     """
-    Базовая схема для обновления роли пользователя администратором.
+    Базовая схема для обновления роли администратором.
     """
 
-    id: int
+    permission_level: int = Field(ge=0, le=100)

@@ -37,7 +37,7 @@ class AdminManagerCRUD:
             user: UserModel,
             role: 'RoleModel',
             session: AsyncSession
-    ):
+    ) -> None:
         """
         Удаляет связь пользователя с ролью.
         """

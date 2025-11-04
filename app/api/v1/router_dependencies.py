@@ -6,7 +6,7 @@ TODO в библиотеке дать возможность передават�
 from datetime import timedelta
 from typing import Any, Callable
 from uuid import UUID
-from fastapi import Depends, HTTPException, Header, status
+from fastapi import Depends, HTTPException, status
 
 from app.api.v1.utils import get_user_max_permission_level
 from app.core.config import settings
@@ -20,13 +20,8 @@ from app.models import (
 from auth.api.v1.dependencies import (
     build_get_current_user_dependency
 )
-from auth.services.constants import (
-    INVALID_ACCESS_TOKEN_ERROR,
-    USER_NOT_FOUND_ERROR
-)
 from auth.services.security.token_service import (
     TokenService,
-    TokenServiceProtocol
 )
 
 
@@ -54,13 +49,13 @@ get_current_user_dependency = build_get_current_user_dependency(
     user_repository_dependency=get_user_repository
 )
 
-def author_or_min_level(
+def author_or_min_permission_level(
     resource_dependency: Callable[..., Any],
     min_level: int,
     author_attr: str,
 ) -> MockData:
     """
-    Фабрика зависимости, которая создает зависимость, проверяющую право
+    Фабрика, которая создает зависимость, проверяющую право
     доступа к ресурсу, динамически передавая в нее параметры:
     - min_level: минимальный уровень прав доступа пользователя
     - author_attr: имя атрибута в модели ресурса, который хранит ссылку на
@@ -69,7 +64,7 @@ def author_or_min_level(
     async def _dependency(
         current_user: UserModel = Depends(get_current_user_dependency),
         resource: Any = Depends(resource_dependency)
-    ) -> MockData:
+    ) -> Any:
         """
         Проверяет, что текущий пользователь является автором
         запрашиваемого объекта или имеет минимальный уровень
@@ -92,10 +87,11 @@ def author_or_min_level(
         )
     return _dependency
 
-def get_chocolate(
+
+def get_chocolate_dependency(
     chocolate_id: int,
     chocolates: dict[str, MockData] = Depends(get_mock_data),
-):
+) -> MockData:
     chocolate = chocolates.get(chocolate_id)
     if chocolate is None:
         raise HTTPException(
@@ -113,9 +109,7 @@ async def get_target_user(
     Получает искомого пользователя по его id(UUID) переданного в
     path-параметре запроса.
     """
-    print(user_id)
     target_user = await user_repository.get_user_by_id(user_id)
-    print(target_user.id)
     if target_user is None:
         raise HTTPException(
             detail=USER_NOT_FOUND.format(user_id=user_id),
@@ -124,17 +118,17 @@ async def get_target_user(
     return target_user
 
 
-async def target_user_is_not_admin_or_superuser(
-    target_user = Depends(get_target_user),
+async def current_user_is_higher_than_target(
+    current_user: UserModel = Depends(get_current_user_dependency),
+    target_user: UserModel = Depends(get_target_user),
 ) -> UserModel:
     """
-    Проверяет, что искомый пользователь не является
-    администратором или суперпользователем и возвращает его.
+    Проверяет, что отправитель запроса(current_user) имеет более высокий уровень
+    доступа, чем искомый пользователь(target_user), или является суперюзером.
     """
-    print('---------------------------------вошел в проверку что target не admin -----------------------------------')
     if (
-        target_user.is_superuser
-        or any(role.name == 'admin' for role in target_user.roles)
+        get_user_max_permission_level(current_user)
+        <= get_user_max_permission_level(target_user)
     ):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -143,15 +137,38 @@ async def target_user_is_not_admin_or_superuser(
     return target_user
 
 
-async def admin_or_superuser_only(
-    current_user: UserModel = Depends(
-        get_current_user_dependency
-    ),
-) -> None:
-    print('---------------------------------вошел в проверку что админ или суперюзер -----------------------------------')
-    is_admin = any(role.name == 'admin' for role in current_user.roles)
-    if not (is_admin or current_user.is_superuser):
+def require_min_permission_level(
+    min_level: int,
+) -> Callable[..., None]:
+    """
+    Фабрика, которая создает зависимость, проверяющую соответствует ли
+    пользователь минимальному уровню прав доступа (permission_level).
+
+    Параметры:
+      - min_level: параметр фабрики, который определяет необходимый минимальный
+      уровень прав для каждого отдельного эндпоинта.
+    """
+    async def _dependency(
+        current_user: UserModel = Depends(get_current_user_dependency),
+    ) -> None:
+        if current_user.is_superuser or get_user_max_permission_level(current_user) >= min_level:
+            return None
         raise HTTPException(
-            status_code=403,
-            detail=LIMITED_ACCESS
+            detail=LIMITED_ACCESS,
+            status_code=status.HTTP_403_FORBIDDEN,
+        )
+
+    return _dependency
+
+
+async def superuser_only(
+    current_user: UserModel = Depends(get_current_user_dependency),
+) -> None:
+    """
+    Отдельная для суперпользователя зависимость для явного ограничвения.
+    """
+    if not current_user.is_superuser:
+        raise HTTPException(
+            detail=LIMITED_ACCESS,
+            status_code=status.HTTP_403_FORBIDDEN,
         )

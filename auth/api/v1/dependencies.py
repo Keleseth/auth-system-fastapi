@@ -38,7 +38,7 @@ def build_get_current_user_dependency(
         user_repository: Any = Depends(
             user_repository_dependency
         ),
-    ):
+    ) -> Any:
         token = authorization.removeprefix(TOKEN_TYPE).strip()
         try:
             payload = token_service.decode_access(token)

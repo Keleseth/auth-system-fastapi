@@ -22,6 +22,4 @@ __all__ = [
     'LoginResponseSchemaT',
     'UpdateUserSchema',
     'UpdateUserSchemaT',
-    'UpdateUserRoleSchema',
-    'UpdateUserRoleSchemaT',
 ]

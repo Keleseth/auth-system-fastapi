@@ -7,11 +7,14 @@ from app.models.role import RoleModel
 from auth.services.security import DEFAULT_HASHER
 
 
-async def create_admin_author_moderator(session: AsyncSession) -> None:
+async def create_admin_author_moderator(
+        session: AsyncSession
+) -> None:
     """
     Создает трех пользователей с данными из .env, если еще не существует.
 
     Дефолтные пользователи(можно переназначить через .env):
+      - superuser@yandex.ru
       - admin@yandex.ru
       - author@yandex.ru
       - moderator@yandex.ru
@@ -71,4 +74,30 @@ async def create_admin_author_moderator(session: AsyncSession) -> None:
             user.roles.append(data['role'])
             session.add(user)
 
+    await ensure_superuser(session)
     await session.commit()
+
+
+async def ensure_superuser(
+        session: AsyncSession
+) -> None:
+    """
+    Создает суперпользователя с данными из settings, если в базе еще нет
+    ни одного суперпользователя.
+    """
+    result = await session.execute(
+        select(UserModel).where(UserModel.is_superuser == True)
+    )
+    existing = result.scalars().first()
+    if existing:
+        return
+
+    hashed_pw = DEFAULT_HASHER.hash(settings.PASSWORD)
+    super_user = UserModel(
+        id=settings.SUPER_USER_UUID,
+        email=settings.SUPER_USER_EMAIL,
+        hashed_password=hashed_pw,
+        is_active=True,
+        is_superuser=True,
+    )
+    session.add(super_user)

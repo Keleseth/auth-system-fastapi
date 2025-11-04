@@ -15,8 +15,8 @@ class MockData:
     chocolate: str
 
 
-mock_objects: dict[str, MockData] = {str(i):
-    MockData(
+mock_objects: dict[str, MockData] = {
+    int(i): MockData(
         chocolate_id=i,
         user_id=settings.AUTHOR_USER_UUID,
         chocolate='марс' if i==1 else ('сникерс' if i==2 else 'твикс')

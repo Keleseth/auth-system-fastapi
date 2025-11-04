@@ -1,8 +1,8 @@
-"""initial
+"""initail
 
-Revision ID: ca232f0bcf11
+Revision ID: cbc539c6648e
 Revises: 
-Create Date: 2025-11-04 18:04:49.643755
+Create Date: 2025-11-04 22:55:42.026865
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'ca232f0bcf11'
+revision: str = 'cbc539c6648e'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -27,7 +27,7 @@ def upgrade() -> None:
     sa.Column('name', sa.String(length=50), nullable=False),
     sa.Column('description', sa.String(length=255), nullable=True),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
-    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False),
     sa.CheckConstraint('char_length(btrim(name)) >= 1', name='ck_role_name_minlen'),
     sa.CheckConstraint('permission_level >= 0 AND permission_level <= 100', name='ck_role_permission_level_min_max'),
     sa.PrimaryKeyConstraint('id'),
@@ -43,11 +43,12 @@ def upgrade() -> None:
     conn = op.get_bind()
     conn.execute(
         sa.text("""
-            INSERT INTO role_model (name, description, permission_level)
-            VALUES (:name, :description, :permission_level)
+            INSERT INTO role_model (name, description, permission_level, updated_at)
+            VALUES (:name, :description, :permission_level, NOW())
             ON CONFLICT (name) DO UPDATE
             SET description = EXCLUDED.description,
-                permission_level = EXCLUDED.permission_level
+                permission_level = EXCLUDED.permission_level,
+                updated_at = NOW()
         """),
         roles
     )
@@ -63,7 +64,7 @@ def upgrade() -> None:
     sa.Column('token_version', sa.Integer(), nullable=False),
     sa.Column('deleted_at', sa.DateTime(timezone=True), nullable=True),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
-    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False),
     sa.CheckConstraint('first_name IS NULL OR char_length(btrim(first_name)) >= 1', name='ck_first_name_min_length'),
     sa.CheckConstraint('last_name IS NULL OR char_length(btrim(last_name)) >= 1', name='ck_last_name_min_length'),
     sa.CheckConstraint('patronymic IS NULL OR char_length(btrim(patronymic)) >= 1', name='ck_patronymic_min_length'),

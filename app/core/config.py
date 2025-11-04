@@ -5,6 +5,8 @@ from pydantic_settings import BaseSettings
 class Settings(BaseSettings):
 
     # UUID пользователей для проверки прав доступа
+    SUPER_USER_UUID: str = 'c25943c6-0b66-428c-9ac7-d0e48192c25f'
+    SUPER_USER_EMAIL: str = 'superuser@yandex.ru'
     AUTHOR_USER_UUID: str = 'fc32b64f-2599-4dd3-ac28-3a1b3fad4e30'
     AUTHOR_EMAIL: str = 'author@yandex.ru'
     ADMIN_USER_UUID: str = 'c50eb804-131d-4cde-a504-cea137c00dc6'
