@@ -25,6 +25,7 @@ async def add_role_to_user(
         """
         Добавляет связь между пользователем и ролью.
         """
+        print('---------------------------------вошел в юзкейс -----------------------------------')
         session = user_repository.get_session()
         orm_role_obj = await role_crud.get_role(
             role_id=role_id,
@@ -42,6 +43,7 @@ async def add_role_to_user(
                 session=session,
             )
             await user_repository.update_token_version(orm_user_obj)
+            (len(orm_user_obj.roles)) > 0
             await user_repository.commit()
         except SQLAlchemyError as e:
             await user_repository.rollback()

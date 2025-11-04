@@ -36,8 +36,8 @@ def upgrade() -> None:
     roles = [
         {'name': 'admin', 'description': 'Администратор платформы с полным доступом', 'permission_level': 100},
         {'name': 'lead_moderator', 'description': 'Старший модератор с расширенными правами', 'permission_level': 75},
-        {'name': 'moderator', 'description': 'Модератор с лимитированным доступом, ограничивается администратором', 'permission_level': 50},
-        {'name': 'junior_moderator', 'description': 'Младший модератор с базовыми модерационными правами', 'permission_level': 30},
+        {'name': 'moderator', 'description': 'Средний модератор', 'permission_level': 50},
+        {'name': 'junior_moderator', 'description': 'Младший модератор', 'permission_level': 30},
         {'name': 'user', 'description': 'Обычный пользователь с базовым доступом', 'permission_level': 10},
     ]
     conn = op.get_bind()

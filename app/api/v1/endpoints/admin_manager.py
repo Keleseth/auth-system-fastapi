@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends
 
 
 from app.api.v1.router_dependencies import (
-    admin_only,
+    admin_or_superuser_only,
     get_user_repository,
     target_user_is_not_admin_or_superuser,
 )
@@ -30,15 +30,17 @@ router = APIRouter(
 async def add_user_role_by_admin(
     user_id: UUID,
     role_id: int,
-    _: None = Depends(admin_only),
-    user_repository=Depends(get_user_repository),
+    _: None = Depends(admin_or_superuser_only),
+    user_repository = Depends(get_user_repository),
     target_user = Depends(target_user_is_not_admin_or_superuser),
 ):
+    print('---------------------------------вошел в эндпоинт -----------------------------------')
     updated_user = await add_role_to_user(
         orm_user_obj=target_user,
         role_id=role_id,
         user_repository=user_repository,
     )
+    print('--------------------------------{updated_user.roles})------------------------------------')
     return updated_user
 
 
@@ -49,7 +51,7 @@ async def add_user_role_by_admin(
 async def delete_role_from_user(
     user_id: UUID,
     role_id: int,
-    _: None = Depends(admin_only),
+    _: None = Depends(admin_or_superuser_only),
     user_repository=Depends(get_user_repository),
     target_user=Depends(target_user_is_not_admin_or_superuser),
 ):
