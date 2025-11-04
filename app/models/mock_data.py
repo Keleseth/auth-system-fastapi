@@ -10,14 +10,14 @@ class MockData:
     для тестирования и разработки.
     """
 
-    id: int
+    chocolate_id: int
     user_id: UUID
     chocolate: str
 
 
-mock_objects: dict[str, MockData] = {str(i):
-    MockData(
-        id=i,
+mock_objects: dict[str, MockData] = {
+    int(i): MockData(
+        chocolate_id=i,
         user_id=settings.AUTHOR_USER_UUID,
         chocolate='марс' if i==1 else ('сникерс' if i==2 else 'твикс')
     ) for i in range(1, 4)

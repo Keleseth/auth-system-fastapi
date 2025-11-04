@@ -5,23 +5,23 @@ TODO в библиотеке дать возможность передават�
 """
 from datetime import timedelta
 from typing import Any, Callable
-from fastapi import Depends, HTTPException, Header, status
-from jose import JWTError
+from uuid import UUID
+from fastapi import Depends, HTTPException, status
 
+from app.api.v1.utils import get_user_max_permission_level
 from app.core.config import settings
-from app.core.constants import LIMITED_ACCESS, OBJECT_NOT_FOUND
+from app.core.constants import LIMITED_ACCESS, OBJECT_NOT_FOUND, USER_NOT_FOUND
 from app.db.dependencies import get_user_repository
-from app.models.mock_data import mock_objects, MockData
+from app.models import (
+    mock_objects,
+    MockData,
+    UserModel,
+)
 from auth.api.v1.dependencies import (
     build_get_current_user_dependency
 )
-from auth.services.constants import (
-    INVALID_ACCESS_TOKEN_ERROR,
-    USER_NOT_FOUND_ERROR
-)
 from auth.services.security.token_service import (
     TokenService,
-    TokenServiceProtocol
 )
 
 
@@ -49,35 +49,126 @@ get_current_user_dependency = build_get_current_user_dependency(
     user_repository_dependency=get_user_repository
 )
 
-async def author_or_admin_only(
-    id,
-    current_user = Depends(get_current_user_dependency),
-    mock_objects: dict[str, MockData] = Depends(get_mock_data)
-):
-    current_user_id = str(current_user.id)
-    chocolate = mock_objects.get(id)
-    if chocolate is None:
-        raise HTTPException(
-            detail=OBJECT_NOT_FOUND,
-            status_code=status.HTTP_400_BAD_REQUEST
-        )
-    is_admin = any(role.name == 'admin' for role in current_user.roles)
-    if current_user_id != chocolate.user_id and not is_admin:
+def author_or_min_permission_level(
+    resource_dependency: Callable[..., Any],
+    min_level: int,
+    author_attr: str,
+) -> MockData:
+    """
+    Фабрика, которая создает зависимость, проверяющую право
+    доступа к ресурсу, динамически передавая в нее параметры:
+    - min_level: минимальный уровень прав доступа пользователя
+    - author_attr: имя атрибута в модели ресурса, который хранит ссылку на
+      пользователя.
+    """
+    async def _dependency(
+        current_user: UserModel = Depends(get_current_user_dependency),
+        resource: Any = Depends(resource_dependency)
+    ) -> Any:
+        """
+        Проверяет, что текущий пользователь является автором
+        запрашиваемого объекта или имеет минимальный уровень
+        прав доступа. Если доступ есть, возвращает результат зависимости
+        resource_dependency и передает управление дальше.
+
+        В параметр resource ожидается зависимость, которая вернет объект
+        связанный с моделью пользователя полем author_attr(user_id). Параметр
+        добавлен для гибкости, чтобы работать с моделями с отличным fk на
+        пользователя.
+        """
+        if current_user.is_superuser:
+            return resource
+        is_author = str(current_user.id) == str(getattr(resource, author_attr))
+        if is_author or get_user_max_permission_level(current_user) >= min_level:
+            return resource
         raise HTTPException(
             detail=LIMITED_ACCESS,
             status_code=status.HTTP_403_FORBIDDEN,
         )
+    return _dependency
+
+
+def get_chocolate_dependency(
+    chocolate_id: int,
+    chocolates: dict[str, MockData] = Depends(get_mock_data),
+) -> MockData:
+    chocolate = chocolates.get(chocolate_id)
+    if chocolate is None:
+        raise HTTPException(
+            detail=OBJECT_NOT_FOUND,
+            status_code=status.HTTP_404_NOT_FOUND,
+        )
     return chocolate
 
 
-async def admin_only(
-    current_user: Any = Depends(
-        get_current_user_dependency
-    ),
-) -> None:
-    is_admin = any(role.name == 'admin' for role in current_user.roles)
-    if not is_admin:
+async def get_target_user(
+    user_id: UUID,
+    user_repository = Depends(get_user_repository),
+) -> UserModel:
+    """
+    Получает искомого пользователя по его id(UUID) переданного в
+    path-параметре запроса.
+    """
+    target_user = await user_repository.get_user_by_id(user_id)
+    if target_user is None:
         raise HTTPException(
-            status_code=403,
-            detail=LIMITED_ACCESS
+            detail=USER_NOT_FOUND.format(user_id=user_id),
+            status_code=status.HTTP_404_NOT_FOUND,
+        )
+    return target_user
+
+
+async def current_user_is_higher_than_target(
+    current_user: UserModel = Depends(get_current_user_dependency),
+    target_user: UserModel = Depends(get_target_user),
+) -> UserModel:
+    """
+    Проверяет, что отправитель запроса(current_user) имеет более высокий уровень
+    доступа, чем искомый пользователь(target_user), или является суперюзером.
+    """
+    if (
+        get_user_max_permission_level(current_user)
+        <= get_user_max_permission_level(target_user)
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=LIMITED_ACCESS,
+        )
+    return target_user
+
+
+def require_min_permission_level(
+    min_level: int,
+) -> Callable[..., None]:
+    """
+    Фабрика, которая создает зависимость, проверяющую соответствует ли
+    пользователь минимальному уровню прав доступа (permission_level).
+
+    Параметры:
+      - min_level: параметр фабрики, который определяет необходимый минимальный
+      уровень прав для каждого отдельного эндпоинта.
+    """
+    async def _dependency(
+        current_user: UserModel = Depends(get_current_user_dependency),
+    ) -> None:
+        if current_user.is_superuser or get_user_max_permission_level(current_user) >= min_level:
+            return None
+        raise HTTPException(
+            detail=LIMITED_ACCESS,
+            status_code=status.HTTP_403_FORBIDDEN,
+        )
+
+    return _dependency
+
+
+async def superuser_only(
+    current_user: UserModel = Depends(get_current_user_dependency),
+) -> None:
+    """
+    Отдельная для суперпользователя зависимость для явного ограничвения.
+    """
+    if not current_user.is_superuser:
+        raise HTTPException(
+            detail=LIMITED_ACCESS,
+            status_code=status.HTTP_403_FORBIDDEN,
         )

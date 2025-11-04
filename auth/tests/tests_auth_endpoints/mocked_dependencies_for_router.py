@@ -1,10 +1,13 @@
 from dataclasses import dataclass
-import datetime
 from uuid import UUID
 
 from fastapi import HTTPException, Header, status
 
-from auth.services.constants import INACTIVE_USER, INVALID_ACCESS_TOKEN_ERROR, USER_NOT_FOUND_ERROR
+from auth.services.constants import (
+    INACTIVE_USER,
+    INVALID_ACCESS_TOKEN_ERROR,
+    USER_NOT_FOUND_ERROR
+)
 from auth.tests.constants import (
     MOCKED_TOKEN,
     TEST_INACTIVE_USER,
