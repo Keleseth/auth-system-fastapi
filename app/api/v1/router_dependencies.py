@@ -5,13 +5,18 @@ TODO в библиотеке дать возможность передават�
 """
 from datetime import timedelta
 from typing import Any, Callable
+from uuid import UUID
 from fastapi import Depends, HTTPException, Header, status
 from jose import JWTError
 
 from app.core.config import settings
-from app.core.constants import LIMITED_ACCESS, OBJECT_NOT_FOUND
+from app.core.constants import LIMITED_ACCESS, OBJECT_NOT_FOUND, USER_NOT_FOUND
 from app.db.dependencies import get_user_repository
-from app.models.mock_data import mock_objects, MockData
+from app.models import (
+    mock_objects,
+    MockData,
+    UserModel,
+)
 from auth.api.v1.dependencies import (
     build_get_current_user_dependency
 )
@@ -49,11 +54,14 @@ get_current_user_dependency = build_get_current_user_dependency(
     user_repository_dependency=get_user_repository
 )
 
-async def author_or_admin_only(
+async def author_or_min_permission_level(
     id,
-    current_user = Depends(get_current_user_dependency),
+    current_user: UserModel = Depends(get_current_user_dependency),
     mock_objects: dict[str, MockData] = Depends(get_mock_data)
-):
+) -> MockData:
+    """
+    Фабрика з
+    """
     current_user_id = str(current_user.id)
     chocolate = mock_objects.get(id)
     if chocolate is None:
@@ -62,7 +70,8 @@ async def author_or_admin_only(
             status_code=status.HTTP_400_BAD_REQUEST
         )
     is_admin = any(role.name == 'admin' for role in current_user.roles)
-    if current_user_id != chocolate.user_id and not is_admin:
+    is_owner = str(current_user.id) == chocolate.user_id
+    if not (current_user.is_superuser or is_admin or is_owner):
         raise HTTPException(
             detail=LIMITED_ACCESS,
             status_code=status.HTTP_403_FORBIDDEN,
@@ -70,13 +79,48 @@ async def author_or_admin_only(
     return chocolate
 
 
+async def get_target_user(
+    user_id: UUID,
+    user_repository = Depends(get_user_repository),
+) -> UserModel:
+    """
+    Получает искомого пользователя по его id(UUID) переданного в
+    path-параметре запроса.
+    """
+    target_user = await user_repository.get_user_by_id(user_id)
+    if target_user is None:
+        raise HTTPException(
+            detail=USER_NOT_FOUND.format(user_id=user_id),
+            status_code=status.HTTP_404_NOT_FOUND,
+        )
+    return target_user
+
+
+async def target_user_is_not_admin_or_superuser(
+    target_user = Depends(get_target_user),
+) -> UserModel:
+    """
+    Проверяет, что искомый пользователь не является
+    администратором или суперпользователем и возвращает его.
+    """
+    if (
+        target_user.is_superuser
+        or any(role.name == 'admin' for role in target_user.roles)
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=LIMITED_ACCESS,
+        )
+    return target_user
+
+
 async def admin_only(
-    current_user: Any = Depends(
+    current_user: UserModel = Depends(
         get_current_user_dependency
     ),
 ) -> None:
     is_admin = any(role.name == 'admin' for role in current_user.roles)
-    if not is_admin:
+    if not is_admin or not current_user.is_superuser:
         raise HTTPException(
             status_code=403,
             detail=LIMITED_ACCESS

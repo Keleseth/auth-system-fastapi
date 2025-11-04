@@ -25,7 +25,7 @@ def build_get_current_user_dependency(
     *,
     token_service_dependency: Callable[..., TokenServiceProtocol],
     user_repository_dependency: Callable[..., Any],
-):
+) -> Callable[[], Any]:
     """
     Фабрика зависимости 'get_current_user' получения аутентифицированного
     пользователя после проверки токена на валидность.
@@ -38,7 +38,7 @@ def build_get_current_user_dependency(
         user_repository: Any = Depends(
             user_repository_dependency
         ),
-    ) -> Callable[[], Any]:
+    ):
         token = authorization.removeprefix(TOKEN_TYPE).strip()
         try:
             payload = token_service.decode_access(token)

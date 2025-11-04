@@ -6,7 +6,8 @@ from fastapi import APIRouter, Depends
 
 from app.api.v1.router_dependencies import (
     admin_only,
-    get_user_repository
+    get_user_repository,
+    target_user_is_not_admin_or_superuser,
 )
 from app.schemas import (
     ReadUserSchemaAdmin,
@@ -31,9 +32,10 @@ async def add_user_role_by_admin(
     role_id: int,
     _: None = Depends(admin_only),
     user_repository=Depends(get_user_repository),
+    target_user = Depends(target_user_is_not_admin_or_superuser),
 ):
     updated_user = await add_role_to_user(
-        user_id=user_id,
+        orm_user_obj=target_user,
         role_id=role_id,
         user_repository=user_repository,
     )
@@ -49,9 +51,10 @@ async def delete_role_from_user(
     role_id: int,
     _: None = Depends(admin_only),
     user_repository=Depends(get_user_repository),
+    target_user=Depends(target_user_is_not_admin_or_superuser),
 ):
     updated_user = await remove_role_from_user(
-        user_id=user_id,
+        orm_user_obj=target_user,
         role_id=role_id,
         user_repository=user_repository,
     )

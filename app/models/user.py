@@ -1,6 +1,11 @@
 from typing import TYPE_CHECKING
 
-from sqlalchemy.orm import Mapped, relationship
+from sqlalchemy import text
+from sqlalchemy.orm import (
+    Mapped,
+    mapped_column,
+    relationship,
+)
 
 from auth.sqlalchemy_mixins import (
     UserMixin,
@@ -20,6 +25,11 @@ class UserModel(BaseModel, UserMixin, TimeStampMixin):
     Связь с ролями определяется здесь.
     """
 
+    is_superuser: Mapped[bool] = mapped_column(
+        default=False,
+        server_default=text('false'),
+        nullable=False
+    )
     roles: Mapped[list['RoleModel']] = relationship(
         secondary=user_role_association,
         back_populates='users',
