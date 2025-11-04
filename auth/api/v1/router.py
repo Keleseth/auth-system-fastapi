@@ -38,6 +38,14 @@ from fastapi import (
 
 from auth.abstractions import UserModelTypeHint
 from auth.ports.user_repository import UserRepositoryProtocol
+from auth.services.constants import (
+    AUTH_PREFIX,
+    LOGIN_PREFIX,
+    LOGOUT_PREFIX,
+    REGISTER_PREFIX,
+    SOFT_DELETE_USER_PREFIX,
+    UPDATE_PROFILE_PREFIX,
+)
 from auth.services.security import (
     DEFAULT_HASHER,
     PasswordHasher,
@@ -76,7 +84,7 @@ def create_auth_router(
         UpdateUserSchemaT,
     ] = AuthSchemas(),
     password_hasher: PasswordHasher = DEFAULT_HASHER,
-    prefix: str = '/auth',
+    prefix: str = AUTH_PREFIX,
     tags: list[str] | None = None,
     test_mode: bool = False,
     _mock_get_current_user: Callable[..., UserModelTypeHint] | None = None,
@@ -125,7 +133,7 @@ def create_auth_router(
         )
 
     @router.post(
-        '/register',
+        REGISTER_PREFIX,
         response_model=schemas.read,
         status_code=status.HTTP_201_CREATED,
     )
@@ -152,7 +160,7 @@ def create_auth_router(
         return user
 
     @router.post(
-        '/login',
+        LOGIN_PREFIX,
         response_model=schemas.login_response,
         status_code=status.HTTP_200_OK,
     )
@@ -180,7 +188,7 @@ def create_auth_router(
 
 
     @router.post(
-        '/logout',
+        LOGOUT_PREFIX,
         status_code=status.HTTP_204_NO_CONTENT,
     )
     async def logout(
@@ -199,7 +207,7 @@ def create_auth_router(
 
 
     @router.patch(
-        '/users/me/',
+        UPDATE_PROFILE_PREFIX,
         response_model=schemas.read,
         status_code=status.HTTP_200_OK,
     )
@@ -222,7 +230,7 @@ def create_auth_router(
 
 
     @router.delete(
-        '/users/me/delete',
+        SOFT_DELETE_USER_PREFIX,
         status_code=status.HTTP_204_NO_CONTENT,
     )
     async def soft_delete_me(

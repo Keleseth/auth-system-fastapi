@@ -18,7 +18,7 @@ router = APIRouter(
 auth_router = create_auth_router(
     user_repository_dependency=get_user_repository,
     token_service=token_service,
-    prefix='/testing_auth',
+    prefix='/auth',
     tags=['test1']
 )
 

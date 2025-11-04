@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 
 from auth.api.v1.router import create_auth_router
+from auth.services.constants import AUTH_PREFIX
 from auth.tests.tests_auth_endpoints.mocked_dependencies_for_router import (
     token_service,
     mock_get_current_user,
@@ -25,10 +26,11 @@ test_auth_router = create_auth_router(
     token_service=token_service,
     test_mode=True,
     _mock_get_current_user=mock_get_current_user,
-    prefix='/test_auth',
+    prefix=AUTH_PREFIX,
 )
 app.include_router(test_auth_router)
 
 app.dependency_overrides[
     logout_use_case_dependency
 ] = mocked_logout_use_case_dependency
+ 
